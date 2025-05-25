@@ -24,30 +24,30 @@ fn handle_dot(
     mut dot_transform: Single<&mut Transform, With<Dot>>,
     time: Res<Time>,
 ) {
-    let mut direction = Vec2::splat(0.0);
+    let mut input_direction = Vec2::splat(0.0);
 
-    // Check all the keys and modify the dot's direction accordingly
+    // Check all the keys and modify the dot's input_direction accordingly
     if keyboard.pressed(KeyCode::KeyW) {
-        direction.y += 1.0;
+        input_direction.y += 1.0;
     }
 
     if keyboard.pressed(KeyCode::KeyA) {
-        direction.x -= 1.0;
+        input_direction.x -= 1.0;
     }
 
     if keyboard.pressed(KeyCode::KeyS) {
-        direction.y -= 1.0;
+        input_direction.y -= 1.0;
     }
 
     if keyboard.pressed(KeyCode::KeyD) {
-        direction.x += 1.0;
+        input_direction.x += 1.0;
     }
 
-    println!("{}", direction);
+    println!("{}", input_direction);
 
     let distance_potential = time.delta_secs() * DOT_VELOCITY;
-    dot_transform.translation.x += direction.x * distance_potential;
-    dot_transform.translation.y += direction.y * distance_potential;
+    dot_transform.translation.x += input_direction.x * distance_potential;
+    dot_transform.translation.y += input_direction.y * distance_potential;
 }
 
 // Initialize all the stuff in the world
