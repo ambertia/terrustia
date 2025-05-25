@@ -15,6 +15,9 @@ fn main() {
 #[derive(Component)]
 struct Dot;
 
+#[derive(Component)]
+struct Velocity(Vec2);
+
 // Move the dot around the screen based on keyboard input
 fn handle_dot(
     keyboard: Res<ButtonInput<KeyCode>>,
@@ -58,6 +61,7 @@ fn setup(
     // Spawn the dot
     commands.spawn((
         Dot,
+        Velocity,
         Mesh2d(meshes.add(Circle::default())),
         MeshMaterial2d(materials.add(Color::WHITE)),
         Transform::default().with_scale(Vec2::splat(10.0).extend(1.)),
