@@ -2,6 +2,10 @@ use bevy::prelude::*;
 
 // Dot's velocity in pixels per second
 const DOT_VELOCITY: f32 = 60.0;
+const DOT_ACCEL: f32 = 60.0;
+const DRAG_FACTOR: f32 = 0.4;
+const VEL_MAX: f32 = 100.0;
+const VEL_MIN: f32 = 10.0;
 
 fn main() {
     App::new()
@@ -22,6 +26,7 @@ struct Velocity(Vec2);
 fn handle_dot(
     keyboard: Res<ButtonInput<KeyCode>>,
     mut dot_transform: Single<&mut Transform, With<Dot>>,
+    mut dot_vel: Single<&mut Velocity, With<Dot>>,
     time: Res<Time>,
 ) {
     let mut input_direction = Vec2::splat(0.0);
@@ -41,6 +46,24 @@ fn handle_dot(
 
     if keyboard.pressed(KeyCode::KeyD) {
         input_direction.x += 1.0;
+    }
+
+    input_direction.normalize();
+
+    // Apply a decay to the velocity, but only if there is neutral input along the axis
+    if input_direction.x == 0.0 {
+        if dot_vel.0.x < VEL_MIN {
+            dot_vel.0.x = 0.0;
+        } else {
+            dot_vel.0.x *= DRAG_FACTOR * time.delta_secs();
+        }
+    }
+    if input_direction.y == 0.0 {
+        if dot_vel.0.y < VEL_MIN {
+            dot_vel.0.y = 0.0;
+        } else {
+            dot_vel.0.y *= DRAG_FACTOR * time.delta_secs();
+        }
     }
 
     println!("{}", input_direction);
