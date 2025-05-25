@@ -19,7 +19,7 @@ fn main() {
 #[derive(Component)]
 struct Dot;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 struct Velocity(Vec2);
 
 // Move the dot around the screen based on keyboard input
@@ -48,27 +48,24 @@ fn handle_dot(
         input_direction.x += 1.0;
     }
 
-    input_direction.normalize();
+    input_direction = input_direction.normalize_or_zero();
 
-    // Apply a decay to the velocity, but only if there is neutral input along the axis
-    if input_direction.x == 0.0 {
-        if dot_vel.0.x < VEL_MIN {
-            dot_vel.0.x = 0.0;
-        } else {
-            dot_vel.0.x *= DRAG_FACTOR * time.delta_secs();
-        }
+    // Apply a decay to the velocity
+    if dot_vel.0.x.abs() < VEL_MIN {
+        dot_vel.0.x = 0.0;
+    } else {
+        dot_vel.0.x *= 1.0 - (DRAG_FACTOR * time.delta_secs());
     }
-    if input_direction.y == 0.0 {
-        if dot_vel.0.y < VEL_MIN {
-            dot_vel.0.y = 0.0;
-        } else {
-            dot_vel.0.y *= DRAG_FACTOR * time.delta_secs();
-        }
+
+    if dot_vel.0.y.abs() < VEL_MIN {
+        dot_vel.0.y = 0.0;
+    } else {
+        dot_vel.0.y *= 1.0 - (DRAG_FACTOR * time.delta_secs());
     }
 
     // Apply acceleration to the dot's velocity
-    dot_vel.0.x *= DOT_ACCEL * time.delta_secs();
-    dot_vel.0.y *= DOT_ACCEL * time.delta_secs();
+    dot_vel.0.x += input_direction.x * DOT_ACCEL * time.delta_secs();
+    dot_vel.0.y += input_direction.y * DOT_ACCEL * time.delta_secs();
 
     // Apply velocity to the dot's transform
     dot_transform.translation.x += dot_vel.0.x * time.delta_secs();
@@ -86,7 +83,7 @@ fn setup(
     // Spawn the dot
     commands.spawn((
         Dot,
-        Velocity,
+        Velocity(Vec2::ZERO),
         Mesh2d(meshes.add(Circle::default())),
         MeshMaterial2d(materials.add(Color::WHITE)),
         Transform::default().with_scale(Vec2::splat(10.0).extend(1.)),
