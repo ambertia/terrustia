@@ -66,11 +66,13 @@ fn handle_dot(
         }
     }
 
-    println!("{}", input_direction);
+    // Apply acceleration to the dot's velocity
+    dot_vel.0.x *= DOT_ACCEL * time.delta_secs();
+    dot_vel.0.y *= DOT_ACCEL * time.delta_secs();
 
-    let distance_potential = time.delta_secs() * DOT_VELOCITY;
-    dot_transform.translation.x += input_direction.x * distance_potential;
-    dot_transform.translation.y += input_direction.y * distance_potential;
+    // Apply velocity to the dot's transform
+    dot_transform.translation.x += dot_vel.0.x * time.delta_secs();
+    dot_transform.translation.y += dot_vel.0.y * time.delta_secs();
 }
 
 // Initialize all the stuff in the world
