@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{math::bounding::*, prelude::*};
 
 const DOT_ACCEL: f32 = 30.0;
 const DRAG_FACTOR: f32 = 0.6;
@@ -61,8 +61,24 @@ fn move_dot(dot_query: Single<(&Velocity, &mut Transform), With<Dot>>, time: Res
     transform.translation += (velocity.0 * time.delta_secs()).extend(0.0);
 }
 
-    // Apply velocity to the dot's transform
-    dot_transform.translation += dot_vel.0.extend(0.0);
+// Check if the dot is colliding with the ground and ensure its vertical velocity becomes positive
+fn check_collision(
+    mut transforms: ParamSet<(
+        Single<&Transform, With<Dot>>,
+        Single<&Transform, With<Ground>>,
+    )>,
+    mut dot_vel: Single<&mut Velocity, With<Dot>>,
+) {
+    // TODO: Turn dot size into a constant
+    let dot_collider = BoundingCircle::new(transforms.p0().translation.truncate(), 5.0);
+    let ground_collider = Aabb2d::new(
+        transforms.p1().translation.clone().truncate(),
+        transforms.p1().scale.clone().truncate() / 2.0,
+    );
+
+    if dot_collider.intersects(&ground_collider) && dot_vel.0.y < 0.0 {
+        dot_vel.0.y *= -0.9;
+    }
 }
 
 // Initialize all the stuff in the world
