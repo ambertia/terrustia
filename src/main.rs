@@ -19,6 +19,9 @@ struct Dot;
 #[derive(Component, Default)]
 struct Velocity(Vec2);
 
+#[derive(Component)]
+struct Ground;
+
 // Move the dot around the screen based on keyboard input
 fn handle_dot(
     keyboard: Res<ButtonInput<KeyCode>>,
@@ -62,6 +65,17 @@ fn setup(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     commands.spawn(Camera2d);
+
+    // Spawn the ground
+    commands.spawn((
+        Ground,
+        Sprite::from_color(Color::WHITE, Vec2::ONE),
+        Transform {
+            translation: Vec3::from_array([0.0, -50.0, 1.0]),
+            scale: Vec3::from_array([1000.0, 5.0, 1.0]),
+            ..default()
+        },
+    ));
 
     // Spawn the dot
     commands.spawn((
