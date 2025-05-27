@@ -10,7 +10,10 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .insert_resource(ClearColor(Color::BLACK))
         .add_systems(Startup, setup)
-        .add_systems(Update, handle_dot)
+        .add_systems(
+            FixedUpdate,
+            (accelerate_dot, check_collision, move_dot).chain(),
+        )
         .run();
 }
 
