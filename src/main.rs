@@ -109,6 +109,6 @@ fn setup(
         Velocity(Vec2::ZERO),
         Mesh2d(meshes.add(Circle::default())),
         MeshMaterial2d(materials.add(Color::WHITE)),
-        Transform::default().with_scale(Vec2::splat(10.0).extend(1.)),
+        Transform::default().with_scale(Vec2::splat(10.0).extend(0.0)),
     ));
 }
