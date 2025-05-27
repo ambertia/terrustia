@@ -3,6 +3,7 @@ use bevy::prelude::*;
 const DOT_ACCEL: f32 = 30.0;
 const DRAG_FACTOR: f32 = 0.6;
 const VEL_MAX: f32 = 100.0;
+const GRAVITY: f32 = 15.0;
 
 fn main() {
     App::new()
@@ -23,9 +24,8 @@ struct Velocity(Vec2);
 struct Ground;
 
 // Move the dot around the screen based on keyboard input
-fn handle_dot(
+fn accelerate_dot(
     keyboard: Res<ButtonInput<KeyCode>>,
-    mut dot_transform: Single<&mut Transform, With<Dot>>,
     mut dot_vel: Single<&mut Velocity, With<Dot>>,
     time: Res<Time>,
 ) {
@@ -50,9 +50,16 @@ fn handle_dot(
 
     input_direction = input_direction.normalize_or_zero();
 
+    // Apply decay, gravity, and acceleration to the dot before clamping it to the max
     dot_vel.0 = (dot_vel.0.lerp(Vec2::ZERO, DRAG_FACTOR * time.delta_secs())
         + (input_direction * DOT_ACCEL * time.delta_secs()))
-    .clamp_length_max(VEL_MAX);
+        - (Vec2::ZERO.with_y(GRAVITY * time.delta_secs())).clamp_length_max(VEL_MAX);
+}
+
+fn move_dot(dot_query: Single<(&Velocity, &mut Transform), With<Dot>>, time: Res<Time>) {
+    let (velocity, mut transform) = dot_query.into_inner();
+    transform.translation += (velocity.0 * time.delta_secs()).extend(0.0);
+}
 
     // Apply velocity to the dot's transform
     dot_transform.translation += dot_vel.0.extend(0.0);
