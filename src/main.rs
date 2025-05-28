@@ -32,30 +32,9 @@ fn accelerate_dot(
     mut dot_vel: Single<&mut Velocity, With<Dot>>,
     time: Res<Time>,
 ) {
-    let mut input_direction = Vec2::splat(0.0);
-
-    // Check all the keys and modify the dot's input_direction accordingly
-    if keyboard.pressed(KeyCode::KeyW) {
-        input_direction.y += 1.0;
-    }
-
-    if keyboard.pressed(KeyCode::KeyA) {
-        input_direction.x -= 1.0;
-    }
-
-    if keyboard.pressed(KeyCode::KeyS) {
-        input_direction.y -= 1.0;
-    }
-
-    if keyboard.pressed(KeyCode::KeyD) {
-        input_direction.x += 1.0;
-    }
-
-    input_direction = input_direction.normalize_or_zero();
-
     // Apply decay, gravity, and acceleration to the dot before clamping it to the max
     dot_vel.0 = (dot_vel.0.lerp(Vec2::ZERO, DRAG_FACTOR * time.delta_secs())
-        + (input_direction * DOT_ACCEL * time.delta_secs()))
+        + (get_direction_from_keyboard(keyboard) * DOT_ACCEL * time.delta_secs()))
         - (Vec2::ZERO.with_y(GRAVITY * time.delta_secs())).clamp_length_max(VEL_MAX);
 }
 
@@ -84,6 +63,29 @@ fn check_collision(
     }
 }
 
+// Return a normalized Vec2 for acceleration vector based on keyboard input
+fn get_direction_from_keyboard(keyboard: Res<ButtonInput<KeyCode>>) -> Vec2 {
+    let mut input_direction = Vec2::splat(0.0);
+
+    // Check all the keys and modify the dot's input_direction accordingly
+    if keyboard.pressed(KeyCode::KeyW) {
+        input_direction.y += 1.0;
+    }
+
+    if keyboard.pressed(KeyCode::KeyA) {
+        input_direction.x -= 1.0;
+    }
+
+    if keyboard.pressed(KeyCode::KeyS) {
+        input_direction.y -= 1.0;
+    }
+
+    if keyboard.pressed(KeyCode::KeyD) {
+        input_direction.x += 1.0;
+    }
+
+    input_direction.normalize_or_zero()
+}
 // Initialize all the stuff in the world
 fn setup(
     mut commands: Commands,
