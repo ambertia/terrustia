@@ -1,9 +1,15 @@
-use bevy::{math::bounding::*, prelude::*};
+use bevy::{
+    color::palettes::css::{RED, YELLOW},
+    math::bounding::*,
+    prelude::*,
+};
 
 const DOT_ACCEL: f32 = 60.0;
 const DRAG_FACTOR: f32 = 0.2;
 const VEL_MAX: f32 = 300.0;
 const GRAVITY: f32 = 15.0;
+const ACCEL_ARROW_LENGTH: f32 = 100.0;
+const VEL_ARROW_LENGTH: f32 = 100.0;
 
 fn main() {
     App::new()
@@ -14,6 +20,7 @@ fn main() {
             FixedUpdate,
             (accelerate_dot, check_collision, move_dot).chain(),
         )
+        .add_systems(Update, render_arrows)
         .run();
 }
 
@@ -86,6 +93,35 @@ fn get_direction_from_keyboard(keyboard: Res<ButtonInput<KeyCode>>) -> Vec2 {
 
     input_direction.normalize_or_zero()
 }
+
+// Create indicators for dot acceleration and velocity using a gizmo
+fn render_arrows(
+    dot_query: Single<(&Velocity, &Transform), With<Dot>>,
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut gizmos: Gizmos,
+) {
+    let dot_position = dot_query.1.translation.truncate();
+
+    // Render the acceleration arrow in red based on the keyboard input
+    let mut input_direction = get_direction_from_keyboard(keyboard);
+    // Because gravity should be included in the display, some more complicated math has to be done
+    // Gravity strength relative to DOT_ACCEL defines how far down the arrow gets shifted
+    input_direction -= Vec2::from([0.0, GRAVITY / DOT_ACCEL]);
+    gizmos.arrow_2d(
+        dot_position,
+        dot_position + input_direction * ACCEL_ARROW_LENGTH,
+        RED,
+    );
+
+    // Render the velocity arrow in yellow based on the entity's component value
+    // Arrow should equal the constant's length at VEL_MAX
+    gizmos.arrow_2d(
+        dot_position,
+        dot_position + dot_query.0.0 * VEL_ARROW_LENGTH / VEL_MAX,
+        YELLOW,
+    );
+}
+
 // Initialize all the stuff in the world
 fn setup(
     mut commands: Commands,
