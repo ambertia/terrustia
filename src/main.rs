@@ -1,8 +1,8 @@
 use bevy::{math::bounding::*, prelude::*};
 
-const DOT_ACCEL: f32 = 30.0;
-const DRAG_FACTOR: f32 = 0.6;
-const VEL_MAX: f32 = 100.0;
+const DOT_ACCEL: f32 = 60.0;
+const DRAG_FACTOR: f32 = 0.2;
+const VEL_MAX: f32 = 300.0;
 const GRAVITY: f32 = 15.0;
 
 fn main() {
