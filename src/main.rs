@@ -1,6 +1,9 @@
 use bevy::{
-    color::palettes::css::{RED, YELLOW},
-    math::bounding::*,
+    color::palettes::css::{RED, SADDLE_BROWN, YELLOW},
+    math::{
+        bounding::*,
+        ops::{powf, sqrt},
+    },
     prelude::*,
     window::PrimaryWindow,
 };
@@ -12,6 +15,9 @@ const GRAVITY: f32 = 15.0;
 const ACCEL_ARROW_LENGTH: f32 = 100.0;
 const VEL_ARROW_LENGTH: f32 = 100.0;
 const DOT_RADIUS: f32 = 5.0;
+const BLOCK_SIZE: f32 = 10.0;
+const BLOCKS_X: u16 = 80;
+const BLOCKS_Y: u16 = 40;
 
 fn main() {
     App::new()
@@ -34,6 +40,9 @@ struct Velocity(Vec2);
 
 #[derive(Component)]
 struct Ground;
+
+#[derive(Component)]
+struct Block;
 
 // Move the dot around the screen based on keyboard input
 fn accelerate_dot(
@@ -76,20 +85,43 @@ fn check_bounds(
 
 // Check if the dot is colliding with the ground and ensure its vertical velocity becomes positive
 fn check_collision(
-    mut transforms: ParamSet<(
-        Single<&Transform, With<Dot>>,
-        Single<&Transform, With<Ground>>,
-    )>,
+    dot_transform: Single<&Transform, With<Dot>>,
+    blocks_query: Query<&Transform, With<Block>>,
     mut dot_vel: Single<&mut Velocity, With<Dot>>,
 ) {
-    let dot_collider = BoundingCircle::new(transforms.p0().translation.truncate(), 5.0);
-    let ground_collider = Aabb2d::new(
-        transforms.p1().translation.clone().truncate(),
-        transforms.p1().scale.clone().truncate() / 2.0,
-    );
+    // So far the only collision is with the ground, and the dot shouldn't collide when moving up
+    if dot_vel.0.y > 0.0 {
+        return;
+    }
 
-    if dot_collider.intersects(&ground_collider) && dot_vel.0.y < 0.0 {
-        dot_vel.0.y *= -0.9;
+    let dot_collider = BoundingCircle::new(dot_transform.translation.truncate(), 5.0);
+
+    // Add colliders to a vec to be used for collision checking, but only add blocks the dot can
+    // actually collide with.
+    let critical_distance_squared: f32 = powf(sqrt(2.0) * BLOCK_SIZE + DOT_RADIUS, 2.0);
+    let mut nearby_blocks: Vec<Aabb2d> = Vec::new();
+    for block in blocks_query {
+        // The furthest case where the dot could collide with a block is diagonal on the corner,
+        // where the distance between block and dot centers is DOT_RADIUS + sqrt(2)*BLOCK_SIZE
+        if block
+            .translation
+            .truncate()
+            .distance_squared(dot_transform.translation.truncate())
+            <= critical_distance_squared
+        {
+            nearby_blocks.push(Aabb2d::new(
+                block.translation.truncate(),
+                block.scale.truncate() / 2.0,
+            ));
+        }
+    }
+
+    // Iterate over all the potentially colliding tiles and check for collision
+    for bound in nearby_blocks {
+        if bound.intersects(&dot_collider) {
+            dot_vel.0.y *= -1.0;
+            return;
+        }
     }
 }
 
@@ -153,16 +185,31 @@ fn setup(
 ) {
     commands.spawn(Camera2d);
 
-    // Spawn the ground
-    commands.spawn((
-        Ground,
-        Sprite::from_color(Color::WHITE, Vec2::ONE),
-        Transform {
-            translation: Vec3::from_array([0.0, -50.0, 1.0]),
-            scale: Vec3::from_array([1000.0, 5.0, 1.0]),
-            ..default()
-        },
-    ));
+    // Spawn all of the blocks
+    // The ground should start at zero level, and be evenly distributed left and right
+    let y_offset = 0.0 - BLOCK_SIZE / 2.0;
+    let stage_width = f32::from(BLOCKS_X) * BLOCK_SIZE;
+    let x_offset = -(stage_width / 2.0) + BLOCK_SIZE / 2.0;
+    for j in 0..BLOCKS_Y {
+        for i in 0..BLOCKS_X {
+            commands.spawn((
+                Block,
+                Transform {
+                    translation: Vec3::from_array([
+                        x_offset + f32::from(i) * BLOCK_SIZE,
+                        y_offset - f32::from(j) * BLOCK_SIZE,
+                        0.0,
+                    ]),
+                    scale: Vec3::from_array([BLOCK_SIZE, BLOCK_SIZE, 1.0]),
+                    ..default()
+                },
+                Sprite {
+                    color: Color::srgb(SADDLE_BROWN.red, SADDLE_BROWN.green, SADDLE_BROWN.blue),
+                    ..default()
+                },
+            ));
+        }
+    }
 
     // Spawn the dot
     commands.spawn((
