@@ -2,6 +2,7 @@ use bevy::{
     color::palettes::css::{RED, YELLOW},
     math::bounding::*,
     prelude::*,
+    window::PrimaryWindow,
 };
 
 const DOT_ACCEL: f32 = 60.0;
@@ -10,6 +11,7 @@ const VEL_MAX: f32 = 300.0;
 const GRAVITY: f32 = 15.0;
 const ACCEL_ARROW_LENGTH: f32 = 100.0;
 const VEL_ARROW_LENGTH: f32 = 100.0;
+const DOT_RADIUS: f32 = 5.0;
 
 fn main() {
     App::new()
@@ -18,7 +20,7 @@ fn main() {
         .add_systems(Startup, setup)
         .add_systems(
             FixedUpdate,
-            (accelerate_dot, check_collision, move_dot).chain(),
+            (accelerate_dot, check_collision, check_bounds, move_dot).chain(),
         )
         .add_systems(Update, render_arrows)
         .run();
@@ -48,6 +50,28 @@ fn accelerate_dot(
 fn move_dot(dot_query: Single<(&Velocity, &mut Transform), With<Dot>>, time: Res<Time>) {
     let (velocity, mut transform) = dot_query.into_inner();
     transform.translation += (velocity.0 * time.delta_secs()).extend(0.0);
+}
+
+// Check if the dot is colliding with certain screen edges and change its properties
+fn check_bounds(
+    mut dot_query: Single<(&mut Velocity, &mut Transform), With<Dot>>,
+    window: Single<&Window, With<PrimaryWindow>>,
+) {
+    // Check if the dot is colliding with the lower boundary
+    // Collision should take place as the bottom of the dot touches the edge
+    if window.resolution.height() / 2.0 + dot_query.1.translation.y - DOT_RADIUS < 0.0
+        && dot_query.0.0.y < 0.0
+    {
+        // Reflect the dot's vertical velocity
+        dot_query.0.0.y *= -1.0;
+    }
+
+    // Check if the dot is "colliding" with the outer wall
+    // Collision should take place when ball is just barely completely out of frame
+    if dot_query.1.translation.x.abs() - DOT_RADIUS > window.resolution.width() / 2.0 {
+        // Warp the ball to the opposite side of the frame
+        dot_query.1.translation.x *= -1.0;
+    }
 }
 
 // Check if the dot is colliding with the ground and ensure its vertical velocity becomes positive
