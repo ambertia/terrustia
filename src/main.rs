@@ -82,7 +82,6 @@ fn check_collision(
     )>,
     mut dot_vel: Single<&mut Velocity, With<Dot>>,
 ) {
-    // TODO: Turn dot size into a constant
     let dot_collider = BoundingCircle::new(transforms.p0().translation.truncate(), 5.0);
     let ground_collider = Aabb2d::new(
         transforms.p1().translation.clone().truncate(),
@@ -171,6 +170,6 @@ fn setup(
         Velocity(Vec2::ZERO),
         Mesh2d(meshes.add(Circle::default())),
         MeshMaterial2d(materials.add(Color::WHITE)),
-        Transform::default().with_scale(Vec2::splat(10.0).extend(0.0)),
+        Transform::default().with_scale(Vec2::splat(DOT_RADIUS * 2.0).extend(0.0)),
     ));
 }
