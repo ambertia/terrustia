@@ -6,7 +6,7 @@ use bevy::{
 };
 
 const DOT_ACCEL: f32 = 60.0;
-const DRAG_FACTOR: f32 = 0.2;
+const DRAG_FACTOR: f32 = 0.05;
 const VEL_MAX: f32 = 300.0;
 const GRAVITY: f32 = 15.0;
 const ACCEL_ARROW_LENGTH: f32 = 100.0;
