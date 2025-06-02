@@ -34,15 +34,18 @@ fn main() {
 struct Block;
 
 #[derive(Component)]
-#[require(Velocity, Transform, Sprite)]
+#[require(Transform, Sprite, MovementState)]
 struct Player;
 
 #[derive(Component, Default)]
-struct Velocity(Vec2);
+struct MovementState {
+    velocity: Vec2,
+    position: Vec2,
+}
 
 // Apply acceleration due to input and gravity, but limit the velocity
 fn player_accel(
-    mut player: Single<&mut Velocity, With<Player>>,
+    mut player: Single<&mut MovementState, With<Player>>,
     time: Res<Time>,
     keyboard: Res<ButtonInput<KeyCode>>,
 ) {
@@ -51,7 +54,7 @@ fn player_accel(
 
     let vel_step = (vel_step_input + vel_step_grav) * time.delta_secs();
 
-    player.0 = (player.0 + vel_step)
+    player.velocity = (player.velocity + vel_step)
         .move_towards(Vec2::ZERO, DRAG_FACTOR * time.delta_secs())
         .clamp_length_max(VEL_MAX);
 }
@@ -84,7 +87,7 @@ impl PlayerCollision {
 // Detect if the player is colliding with any blocks and alter their velocity to ensure they don't
 // move through blocks
 fn player_collision(
-    mut player: Single<(&Transform, &mut Velocity), With<Player>>,
+    mut player: Single<&mut MovementState, With<Player>>,
     blocks: Query<&Transform, With<Block>>,
 ) {
     // Find all blocks that could collide with the player. This is limited to within a half
@@ -95,9 +98,7 @@ fn player_collision(
     let block_half_size = BLOCK_SIZE / 2.0; // I refuse to calculate this every iteration
     for block in blocks {
         if player
-            .0
-            .translation
-            .truncate()
+            .position
             .distance_squared(block.translation.truncate())
             < critical_distance_squared
         {
@@ -110,7 +111,7 @@ fn player_collision(
 
     // Check all nearby blocks to determine which (if any) intersect the player, and on what face
     let player_bound = Aabb2d::new(
-        player.0.translation.truncate(),
+        player.position,
         Vec2::new(PLAYER_WIDTH / 2.0, PLAYER_HEIGHT / 2.0),
     );
     for block in nearby_blocks {
@@ -120,23 +121,23 @@ fn player_collision(
 
         match PlayerCollision::collision_side(player_bound, block) {
             PlayerCollision::Left => {
-                if player.1.0.x < 0.0 {
-                    player.1.0.x *= -1.0;
+                if player.velocity.x < 0.0 {
+                    player.velocity.x *= -0.5;
                 }
             }
             PlayerCollision::Right => {
-                if player.1.0.x > 0.0 {
-                    player.1.0.x *= -1.0;
+                if player.velocity.x > 0.0 {
+                    player.velocity.x *= -0.5;
                 }
             }
             PlayerCollision::Top => {
-                if player.1.0.y > 0.0 {
-                    player.1.0.y *= -1.0;
+                if player.velocity.y > 0.0 {
+                    player.velocity.y *= -0.1;
                 }
             }
             PlayerCollision::Bottom => {
-                if player.1.0.y < 0.0 {
-                    player.1.0.y *= -1.0;
+                if player.velocity.y < 0.0 {
+                    player.velocity.y *= -0.4;
                 }
             }
         }
@@ -144,30 +145,30 @@ fn player_collision(
 }
 
 // Move the player every update based on the current velocity
-fn player_move(player: Single<(&Velocity, &mut Transform), With<Player>>, time: Res<Time>) {
-    let (velocity, mut transform) = player.into_inner();
-    transform.translation += (velocity.0 * time.delta_secs()).extend(0.0);
+fn player_move(mut player: Single<&mut MovementState, With<Player>>, time: Res<Time>) {
+    let velocity_step = player.velocity * time.delta_secs();
+    player.position += velocity_step;
 }
 
 // Check if the player is colliding with certain screen edges and change its properties
 fn check_bounds(
-    mut player: Single<(&mut Velocity, &mut Transform), With<Player>>,
+    mut player: Single<&mut MovementState, With<Player>>,
     window: Single<&Window, With<PrimaryWindow>>,
 ) {
     // Check if the player is colliding with the lower boundary
     // Collision should take place as the bottom of the player touches the edge
-    if window.resolution.height() / 2.0 + player.1.translation.y - PLAYER_HEIGHT / 2.0 < 0.0
-        && player.0.0.y < 0.0
+    if window.resolution.height() / 2.0 + player.position.y - PLAYER_HEIGHT / 2.0 < 0.0
+        && player.velocity.y < 0.0
     {
         // Reflect the dot's vertical velocity
-        player.0.0.y *= -1.0;
+        player.velocity.y *= -1.0;
     }
 
     // Check if the player is "colliding" with the outer wall
     // Collision should take place when player is just barely completely out of frame
-    if player.1.translation.x.abs() - PLAYER_WIDTH > window.resolution.width() / 2.0 {
+    if player.position.x.abs() - PLAYER_WIDTH > window.resolution.width() / 2.0 {
         // Warp the player to the opposite side of the frame
-        player.1.translation.x *= -1.0;
+        player.position.x *= -1.0;
     }
 }
 
@@ -237,7 +238,10 @@ fn setup(
     // Spawn the dot
     commands.spawn((
         Player,
-        Velocity(Vec2::new(0.0, 0.0)),
+        MovementState {
+            position: Vec2::new(0.0, 30.0),
+            ..default()
+        },
         Mesh2d(meshes.add(Rectangle::default())),
         MeshMaterial2d(materials.add(Color::WHITE)),
         Transform {
