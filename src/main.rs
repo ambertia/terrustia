@@ -1,20 +1,19 @@
 use bevy::{
-    color::palettes::css::{RED, SADDLE_BROWN, YELLOW},
+    color::palettes::css::SADDLE_BROWN,
     math::{
         bounding::*,
-        ops::{powf, sqrt},
+        ops::{hypot, powf},
     },
     prelude::*,
     window::PrimaryWindow,
 };
 
-const DOT_ACCEL: f32 = 60.0;
+const PLAYER_ACCEL: f32 = 60.0;
+const PLAYER_HEIGHT: f32 = BLOCK_SIZE * 3.0;
+const PLAYER_WIDTH: f32 = BLOCK_SIZE * 2.0;
 const DRAG_FACTOR: f32 = 0.05;
 const VEL_MAX: f32 = 300.0;
 const GRAVITY: f32 = 15.0;
-const ACCEL_ARROW_LENGTH: f32 = 100.0;
-const VEL_ARROW_LENGTH: f32 = 100.0;
-const DOT_RADIUS: f32 = 5.0;
 const BLOCK_SIZE: f32 = 10.0;
 const BLOCKS_X: u16 = 80;
 const BLOCKS_Y: u16 = 40;
@@ -26,102 +25,149 @@ fn main() {
         .add_systems(Startup, setup)
         .add_systems(
             FixedUpdate,
-            (accelerate_dot, check_collision, check_bounds, move_dot).chain(),
+            (player_accel, player_collision, check_bounds, player_move).chain(),
         )
-        .add_systems(Update, render_arrows)
         .run();
 }
 
 #[derive(Component)]
-struct Dot;
+struct Block;
+
+#[derive(Component)]
+#[require(Velocity, Transform, Sprite)]
+struct Player;
 
 #[derive(Component, Default)]
 struct Velocity(Vec2);
 
-#[derive(Component)]
-struct Ground;
-
-#[derive(Component)]
-struct Block;
-
-// Move the dot around the screen based on keyboard input
-fn accelerate_dot(
-    keyboard: Res<ButtonInput<KeyCode>>,
-    mut dot_vel: Single<&mut Velocity, With<Dot>>,
+// Apply acceleration due to input and gravity, but limit the velocity
+fn player_accel(
+    mut player: Single<&mut Velocity, With<Player>>,
     time: Res<Time>,
+    keyboard: Res<ButtonInput<KeyCode>>,
 ) {
-    // Apply decay, gravity, and acceleration to the dot before clamping it to the max
-    dot_vel.0 = (dot_vel.0.lerp(Vec2::ZERO, DRAG_FACTOR * time.delta_secs())
-        + (get_direction_from_keyboard(keyboard) * DOT_ACCEL * time.delta_secs()))
-        - (Vec2::ZERO.with_y(GRAVITY * time.delta_secs())).clamp_length_max(VEL_MAX);
+    let vel_step_input = get_direction_from_keyboard(keyboard) * PLAYER_ACCEL;
+    let vel_step_grav = Vec2::from_array([0.0, -1.0]) * GRAVITY;
+
+    let vel_step = (vel_step_input + vel_step_grav) * time.delta_secs();
+
+    player.0 = (player.0 + vel_step)
+        .move_towards(Vec2::ZERO, DRAG_FACTOR * time.delta_secs())
+        .clamp_length_max(VEL_MAX);
 }
 
-fn move_dot(dot_query: Single<(&Velocity, &mut Transform), With<Dot>>, time: Res<Time>) {
-    let (velocity, mut transform) = dot_query.into_inner();
-    transform.translation += (velocity.0 * time.delta_secs()).extend(0.0);
+enum PlayerCollision {
+    Left,
+    Right,
+    Top,
+    Bottom,
 }
 
-// Check if the dot is colliding with certain screen edges and change its properties
-fn check_bounds(
-    mut dot_query: Single<(&mut Velocity, &mut Transform), With<Dot>>,
-    window: Single<&Window, With<PrimaryWindow>>,
-) {
-    // Check if the dot is colliding with the lower boundary
-    // Collision should take place as the bottom of the dot touches the edge
-    if window.resolution.height() / 2.0 + dot_query.1.translation.y - DOT_RADIUS < 0.0
-        && dot_query.0.0.y < 0.0
-    {
-        // Reflect the dot's vertical velocity
-        dot_query.0.0.y *= -1.0;
-    }
-
-    // Check if the dot is "colliding" with the outer wall
-    // Collision should take place when ball is just barely completely out of frame
-    if dot_query.1.translation.x.abs() - DOT_RADIUS > window.resolution.width() / 2.0 {
-        // Warp the ball to the opposite side of the frame
-        dot_query.1.translation.x *= -1.0;
+impl PlayerCollision {
+    // Determine what side of a block a player collides on
+    fn collision_side(player: Aabb2d, block: Aabb2d) -> PlayerCollision {
+        let height_diff = (PLAYER_HEIGHT - PLAYER_WIDTH) / 2.0;
+        let offset = player.center() - block.closest_point(player.center());
+        if offset.x.abs() > offset.y.abs() - height_diff {
+            if offset.x < 0.0 {
+                return PlayerCollision::Right;
+            } else {
+                return PlayerCollision::Left;
+            }
+        } else if offset.y < 0.0 {
+            return PlayerCollision::Top;
+        } else {
+            return PlayerCollision::Bottom;
+        }
     }
 }
-
-// Check if the dot is colliding with the ground and ensure its vertical velocity becomes positive
-fn check_collision(
-    dot_transform: Single<&Transform, With<Dot>>,
-    blocks_query: Query<&Transform, With<Block>>,
-    mut dot_vel: Single<&mut Velocity, With<Dot>>,
+// Detect if the player is colliding with any blocks and alter their velocity to ensure they don't
+// move through blocks
+fn player_collision(
+    mut player: Single<(&Transform, &mut Velocity), With<Player>>,
+    blocks: Query<&Transform, With<Block>>,
 ) {
-    // So far the only collision is with the ground, and the dot shouldn't collide when moving up
-    if dot_vel.0.y > 0.0 {
-        return;
-    }
-
-    let dot_collider = BoundingCircle::new(dot_transform.translation.truncate(), 5.0);
-
-    // Add colliders to a vec to be used for collision checking, but only add blocks the dot can
-    // actually collide with.
-    let critical_distance_squared: f32 = powf(sqrt(2.0) * BLOCK_SIZE + DOT_RADIUS, 2.0);
+    // Find all blocks that could collide with the player. This is limited to within a half
+    // diagonal plus block size of the center of the player.
     let mut nearby_blocks: Vec<Aabb2d> = Vec::new();
-    for block in blocks_query {
-        // The furthest case where the dot could collide with a block is diagonal on the corner,
-        // where the distance between block and dot centers is DOT_RADIUS + sqrt(2)*BLOCK_SIZE
-        if block
+    let critical_distance_squared =
+        powf(hypot(PLAYER_WIDTH, PLAYER_HEIGHT) / 2.0 + BLOCK_SIZE, 2.0);
+    let block_half_size = BLOCK_SIZE / 2.0; // I refuse to calculate this every iteration
+    for block in blocks {
+        if player
+            .0
             .translation
             .truncate()
-            .distance_squared(dot_transform.translation.truncate())
-            <= critical_distance_squared
+            .distance_squared(block.translation.truncate())
+            < critical_distance_squared
         {
             nearby_blocks.push(Aabb2d::new(
                 block.translation.truncate(),
-                block.scale.truncate() / 2.0,
+                Vec2::new(block_half_size, block_half_size),
             ));
         }
     }
 
-    // Iterate over all the potentially colliding tiles and check for collision
-    for bound in nearby_blocks {
-        if bound.intersects(&dot_collider) {
-            dot_vel.0.y *= -1.0;
-            return;
+    // Check all nearby blocks to determine which (if any) intersect the player, and on what face
+    let player_bound = Aabb2d::new(
+        player.0.translation.truncate(),
+        Vec2::new(PLAYER_WIDTH / 2.0, PLAYER_HEIGHT / 2.0),
+    );
+    for block in nearby_blocks {
+        if !block.intersects(&player_bound) {
+            continue;
         }
+
+        match PlayerCollision::collision_side(player_bound, block) {
+            PlayerCollision::Left => {
+                if player.1.0.x < 0.0 {
+                    player.1.0.x *= -1.0;
+                }
+            }
+            PlayerCollision::Right => {
+                if player.1.0.x > 0.0 {
+                    player.1.0.x *= -1.0;
+                }
+            }
+            PlayerCollision::Top => {
+                if player.1.0.y > 0.0 {
+                    player.1.0.y *= -1.0;
+                }
+            }
+            PlayerCollision::Bottom => {
+                if player.1.0.y < 0.0 {
+                    player.1.0.y *= -1.0;
+                }
+            }
+        }
+    }
+}
+
+// Move the player every update based on the current velocity
+fn player_move(player: Single<(&Velocity, &mut Transform), With<Player>>, time: Res<Time>) {
+    let (velocity, mut transform) = player.into_inner();
+    transform.translation += (velocity.0 * time.delta_secs()).extend(0.0);
+}
+
+// Check if the player is colliding with certain screen edges and change its properties
+fn check_bounds(
+    mut player: Single<(&mut Velocity, &mut Transform), With<Player>>,
+    window: Single<&Window, With<PrimaryWindow>>,
+) {
+    // Check if the player is colliding with the lower boundary
+    // Collision should take place as the bottom of the player touches the edge
+    if window.resolution.height() / 2.0 + player.1.translation.y - PLAYER_HEIGHT / 2.0 < 0.0
+        && player.0.0.y < 0.0
+    {
+        // Reflect the dot's vertical velocity
+        player.0.0.y *= -1.0;
+    }
+
+    // Check if the player is "colliding" with the outer wall
+    // Collision should take place when player is just barely completely out of frame
+    if player.1.translation.x.abs() - PLAYER_WIDTH > window.resolution.width() / 2.0 {
+        // Warp the player to the opposite side of the frame
+        player.1.translation.x *= -1.0;
     }
 }
 
@@ -149,34 +195,6 @@ fn get_direction_from_keyboard(keyboard: Res<ButtonInput<KeyCode>>) -> Vec2 {
     input_direction.normalize_or_zero()
 }
 
-// Create indicators for dot acceleration and velocity using a gizmo
-fn render_arrows(
-    dot_query: Single<(&Velocity, &Transform), With<Dot>>,
-    keyboard: Res<ButtonInput<KeyCode>>,
-    mut gizmos: Gizmos,
-) {
-    let dot_position = dot_query.1.translation.truncate();
-
-    // Render the acceleration arrow in red based on the keyboard input
-    let mut input_direction = get_direction_from_keyboard(keyboard);
-    // Because gravity should be included in the display, some more complicated math has to be done
-    // Gravity strength relative to DOT_ACCEL defines how far down the arrow gets shifted
-    input_direction -= Vec2::from([0.0, GRAVITY / DOT_ACCEL]);
-    gizmos.arrow_2d(
-        dot_position,
-        dot_position + input_direction * ACCEL_ARROW_LENGTH,
-        RED,
-    );
-
-    // Render the velocity arrow in yellow based on the entity's component value
-    // Arrow should equal the constant's length at VEL_MAX
-    gizmos.arrow_2d(
-        dot_position,
-        dot_position + dot_query.0.0 * VEL_ARROW_LENGTH / VEL_MAX,
-        YELLOW,
-    );
-}
-
 // Initialize all the stuff in the world
 fn setup(
     mut commands: Commands,
@@ -192,6 +210,9 @@ fn setup(
     let x_offset = -(stage_width / 2.0) + BLOCK_SIZE / 2.0;
     for j in 0..BLOCKS_Y {
         for i in 0..BLOCKS_X {
+            if (i == 39 || i == 40) && (j == 0) {
+                continue;
+            }
             commands.spawn((
                 Block,
                 Transform {
@@ -211,12 +232,18 @@ fn setup(
         }
     }
 
+    // Spawn the player
+
     // Spawn the dot
     commands.spawn((
-        Dot,
-        Velocity(Vec2::ZERO),
-        Mesh2d(meshes.add(Circle::default())),
+        Player,
+        Velocity(Vec2::new(0.0, 0.0)),
+        Mesh2d(meshes.add(Rectangle::default())),
         MeshMaterial2d(materials.add(Color::WHITE)),
-        Transform::default().with_scale(Vec2::splat(DOT_RADIUS * 2.0).extend(0.0)),
+        Transform {
+            translation: Vec3::new(0.0, 30.0, 0.0),
+            scale: Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT).extend(0.0),
+            ..default()
+        },
     ));
 }
