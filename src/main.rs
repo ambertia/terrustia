@@ -23,6 +23,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .insert_resource(ClearColor(Color::BLACK))
         .add_systems(Startup, setup)
+        .add_systems(Update, player_visual_update)
         .add_systems(
             FixedUpdate,
             (player_accel, player_collision, check_bounds, player_move).chain(),
@@ -148,6 +149,25 @@ fn player_collision(
 fn player_move(mut player: Single<&mut MovementState, With<Player>>, time: Res<Time>) {
     let velocity_step = player.velocity * time.delta_secs();
     player.position += velocity_step;
+}
+
+// Update the location of the player on screen every frame by extrapolating
+fn player_visual_update(
+    mut transform: Single<&mut Transform, With<Player>>,
+    state: Single<&MovementState, With<Player>>,
+    fixed_time: Res<Time<Fixed>>,
+    keyboard: Res<ButtonInput<KeyCode>>,
+) {
+    // s = (1/2)at^2 + v_0 * t + s_0
+    let acceleration = get_direction_from_keyboard(keyboard) * PLAYER_ACCEL
+        + Vec2::new(0.0, -1.0) * GRAVITY
+        - state.velocity * DRAG_FACTOR;
+    let future_position = 0.5 * acceleration * powf(fixed_time.delta_secs(), 2.0)
+        + state.velocity * fixed_time.delta_secs()
+        + state.position;
+    transform.translation = transform
+        .translation
+        .lerp(future_position.extend(0.0), fixed_time.overstep_fraction());
 }
 
 // Check if the player is colliding with certain screen edges and change its properties
