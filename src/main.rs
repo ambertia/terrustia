@@ -26,7 +26,10 @@ fn main() {
         .add_systems(Update, player_visual_update)
         .add_systems(
             FixedUpdate,
-            (player_accel, player_collision, check_bounds, player_move).chain(),
+            (
+                (player_accel, player_collision, check_bounds, player_move).chain(),
+                break_block,
+            ),
         )
         .run();
 }
@@ -168,6 +171,37 @@ fn player_visual_update(
     transform.translation = transform
         .translation
         .lerp(future_position.extend(0.0), fixed_time.overstep_fraction());
+}
+
+// Delete blocks when clicked on
+fn break_block(
+    camera: Single<(&Camera, &GlobalTransform)>,
+    mouse: Res<ButtonInput<MouseButton>>,
+    blocks: Query<(&Transform, Entity), With<Block>>,
+    window: Single<&Window, With<PrimaryWindow>>,
+    mut commands: Commands,
+) {
+    // Only try to break blocks if the left mouse button is pressed
+    if !mouse.pressed(MouseButton::Left) {
+        return;
+    }
+
+    // Get the mouse position and convert to world space coordinates
+    let cursor_pos = window.cursor_position().unwrap();
+    let world_pos = camera.0.viewport_to_world_2d(camera.1, cursor_pos);
+    println!("cursor_pos: {}", cursor_pos);
+    println!("world_pos: {:?}", world_pos);
+
+    // Check if there is a block under the cursor
+    // Iterate over all the blocks
+    // TODO: This is horribly inefficient and iterates over every single extant block in the world
+    for block in blocks {
+        // Distance between cursor position and the
+        let distance: Vec2 = block.0.translation.truncate() - world_pos.unwrap();
+        if distance.x.abs() < BLOCK_SIZE / 2.0 && distance.y.abs() < BLOCK_SIZE / 2.0 {
+            commands.entity(block.1).despawn();
+        }
+    }
 }
 
 // Check if the player is colliding with certain screen edges and change its properties
