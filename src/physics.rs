@@ -69,8 +69,13 @@ fn accel_input(
     player.velocity += input_direction * PLAYER_ACCEL;
 }
 
-// TODO: Apply max speed to entities
-fn velocity_cap(movers: Query<&mut MovementState>, time_fixed: Res<Time<Fixed>>) {}
+const VELOCITY_MAX: f32 = 300.;
+/// Apply max speed to entities
+fn velocity_cap(movers: Query<&mut MovementState>) {
+    for mut mover in movers {
+        mover.velocity.clamp_length_max(VELOCITY_MAX);
+    }
+}
 
 // TODO: Check for collisions between entities and nearby solid objects
 fn block_collisions(movers: Query<&mut MovementState>) {}
