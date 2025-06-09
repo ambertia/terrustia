@@ -37,8 +37,37 @@ fn accel_env(movers: Query<&mut MovementState>, time_fixed: Res<Time<Fixed>>) {
     }
 }
 
-// TODO: Apply input-based acceleration to the character
-fn accel_input(player: Single<&mut MovementState, With<Player>>, time_fixed: Res<Time<Fixed>>) {}
+const PLAYER_ACCEL: f32 = 60.;
+/// Apply input-based acceleration to the character
+fn accel_input(
+    mut player: Single<&mut MovementState, With<Player>>,
+    time_fixed: Res<Time<Fixed>>,
+    keyboard: Res<ButtonInput<KeyCode>>,
+) {
+    let mut input_direction = Vec2::splat(0.0);
+
+    // Check all the keys and modify the dot's input_direction accordingly
+    if keyboard.pressed(KeyCode::KeyW) {
+        input_direction.y += 1.0;
+    }
+
+    if keyboard.pressed(KeyCode::KeyA) {
+        input_direction.x -= 1.0;
+    }
+
+    if keyboard.pressed(KeyCode::KeyS) {
+        input_direction.y -= 1.0;
+    }
+
+    if keyboard.pressed(KeyCode::KeyD) {
+        input_direction.x += 1.0;
+    }
+
+    input_direction.normalize_or_zero();
+
+    // Apply an impulse to the player based on the inputs
+    player.velocity += input_direction * PLAYER_ACCEL;
+}
 
 // TODO: Apply max speed to entities
 fn velocity_cap(movers: Query<&mut MovementState>, time_fixed: Res<Time<Fixed>>) {}
