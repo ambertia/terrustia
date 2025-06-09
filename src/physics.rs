@@ -73,7 +73,12 @@ const VELOCITY_MAX: f32 = 300.;
 /// Apply max speed to entities
 fn velocity_cap(movers: Query<&mut MovementState>) {
     for mut mover in movers {
-        mover.velocity.clamp_length_max(VELOCITY_MAX);
+        if mover.velocity.length() < VELOCITY_MAX {
+            continue;
+        } else {
+            let clamped = mover.velocity.clamp_length_max(VELOCITY_MAX);
+            mover.velocity = clamped;
+        }
     }
 }
 
