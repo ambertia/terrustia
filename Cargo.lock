@@ -3550,6 +3550,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "round-to"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6748971297aece58941e34a0406f8ec0c64a2048c74f094a7dd1d98399a0bcc5"
+
+[[package]]
 name = "roxmltree"
 version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3869,6 +3875,7 @@ name = "terrustia"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "round-to",
 ]
 
 [[package]]

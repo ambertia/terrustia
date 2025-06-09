@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 bevy = "0.16.0"
+round-to = "0.1.5"
 
 # Enable small optimizations for local code
 [profile.dev]
