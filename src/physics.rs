@@ -83,7 +83,20 @@ fn velocity_cap(movers: Query<&mut MovementState>) {
 }
 
 // TODO: Check for collisions between entities and nearby solid objects
-fn block_collisions(movers: Query<&mut MovementState>) {}
+fn block_collisions(movers: Query<&mut MovementState>, game_map: Res<GameMap>) {
+    for mut mover in movers {
+        // Get the range of tile coordinates to check for blocks based on the mover's position and size
+        // TODO: This relies on the player's size for now
+        let (range_x, range_y) = mover.tiles_occupied();
+        for x in range_x {
+            for y in range_y {
+                if !game_map.tile_at(x, y).has_solid() {
+                    continue;
+                }
+            }
+        }
+    }
+}
 
 /// Move entities in world space
 fn position_update(movers: Query<&mut MovementState>, time_fixed: Res<Time<Fixed>>) {
