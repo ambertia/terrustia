@@ -80,5 +80,9 @@ fn velocity_cap(movers: Query<&mut MovementState>) {
 // TODO: Check for collisions between entities and nearby solid objects
 fn block_collisions(movers: Query<&mut MovementState>) {}
 
-// TODO: Move entities
-fn position_update(movers: Query<&mut MovementState>, time_fixed: Res<Time<Fixed>>) {}
+/// Move entities in world space
+fn position_update(movers: Query<&mut MovementState>, time_fixed: Res<Time<Fixed>>) {
+    for mut mover in movers {
+        mover.position += mover.velocity * time_fixed.delta_secs();
+    }
+}
