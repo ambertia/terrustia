@@ -83,6 +83,7 @@ fn block_collisions(movers: Query<&mut MovementState>) {}
 /// Move entities in world space
 fn position_update(movers: Query<&mut MovementState>, time_fixed: Res<Time<Fixed>>) {
     for mut mover in movers {
-        mover.position += mover.velocity * time_fixed.delta_secs();
+        let position_delta = mover.velocity * time_fixed.delta_secs();
+        mover.position += position_delta;
     }
 }
