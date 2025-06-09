@@ -8,6 +8,8 @@ use bevy::{
     window::PrimaryWindow,
 };
 
+mod physics;
+
 const PLAYER_ACCEL: f32 = 60.0;
 const PLAYER_HEIGHT: f32 = BLOCK_SIZE * 3.0;
 const PLAYER_WIDTH: f32 = BLOCK_SIZE * 2.0;
