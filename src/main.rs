@@ -9,6 +9,7 @@ use bevy::{
 };
 
 mod physics;
+mod terrain;
 
 const PLAYER_ACCEL: f32 = 60.0;
 const PLAYER_HEIGHT: f32 = BLOCK_SIZE * 3.0;
