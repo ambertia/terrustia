@@ -1,6 +1,9 @@
-use bevy::prelude::*;
+use std::ops::Range;
 
-use crate::Player;
+use bevy::{math::bounding::Aabb2d, prelude::*};
+
+use crate::terrain::GameMap;
+use crate::{Player, terrain};
 
 pub struct PhysicsPlugin;
 
@@ -24,6 +27,11 @@ impl Plugin for PhysicsPlugin {
 struct MovementState {
     position: Vec2,
     velocity: Vec2,
+}
+
+// TODO: Use round_to functions to return the indices of all possible colliding tiles
+impl MovementState {
+    fn tiles_occupied(&self) -> (Range<usize>, Range<usize>) {}
 }
 
 const DRAG_FACTOR: f32 = 0.05;
@@ -82,16 +90,45 @@ fn velocity_cap(movers: Query<&mut MovementState>) {
     }
 }
 
-// TODO: Check for collisions between entities and nearby solid objects
-fn block_collisions(movers: Query<&mut MovementState>, game_map: Res<GameMap>) {
+#[derive(Event)]
+struct Collision(CollisionSide);
+
+enum CollisionSide {
+    Top,
+    Bottom,
+    Left,
+    Right,
+}
+
+// TODO: Check for collisions between entities and nearby solid objects, and fire a CollisionEvent
+fn block_collisions(
+    movers: Query<&mut MovementState>,
+    game_map: Res<GameMap>,
+    mut events: EventWriter<Collision>,
+) {
     for mut mover in movers {
         // Get the range of tile coordinates to check for blocks based on the mover's position and size
-        // TODO: This relies on the player's size for now
-        let (range_x, range_y) = mover.tiles_occupied();
+        let (range_x, range_y) = mover.into_inner().tiles_occupied();
         for x in range_x {
             for y in range_y {
-                if !game_map.tile_at(x, y).has_solid() {
+                let tile = game_map.tile_at(x, y);
+                if !tile.has_solid() {
                     continue;
+                }
+                // TODO: This relies on the player's size for now
+                let height_diff = (crate::PLAYER_HEIGHT - crate::PLAYER_WIDTH) / 2.0;
+                let offset = mover.position
+                    - terrain::map_space_to_aabb2d(x, y).closest_point(mover.position);
+                if offset.x.abs() > offset.y.abs() - height_diff {
+                    if offset.x < 0.0 {
+                        events.write(Collision(CollisionSide::Right));
+                    } else {
+                        events.write(Collision(CollisionSide::Left));
+                    }
+                } else if offset.y < 0.0 {
+                    events.write(Collision(CollisionSide::Top));
+                } else {
+                    events.write(Collision(CollisionSide::Bottom));
                 }
             }
         }
