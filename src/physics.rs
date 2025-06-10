@@ -1,4 +1,5 @@
 use std::ops::Range;
+use std::time::Duration;
 
 use bevy::{math::bounding::Aabb2d, prelude::*};
 use round_to::{CeilTo, FloorTo};
@@ -19,7 +20,8 @@ impl Plugin for PhysicsPlugin {
                 block_collisions,
                 position_update,
             ),
-        );
+        )
+        .add_systems(Update, transform_update);
     }
 }
 
@@ -155,5 +157,14 @@ fn position_update(movers: Query<&mut MovementState>, time_fixed: Res<Time<Fixed
     for mut mover in movers {
         let position_delta = mover.velocity * time_fixed.delta_secs();
         mover.position += position_delta;
+    }
+}
+
+/// Move entities in screen space
+fn transform_update(movers: Query<(&MovementState, &mut Transform)>, time_fixed: Res<Time<Fixed>>) {
+    for mover in movers {
+        let (state, mut transform) = mover;
+        transform.translation =
+            (state.position + state.velocity * time_fixed.overstep().as_secs_f32()).extend(0.0);
     }
 }
