@@ -139,7 +139,7 @@ fn block_collisions(
 }
 
 /// Return map coordinate ranges for all tiles at least partially occupied by the moving object.
-fn tiles_occupied(mover: &MovementState, transform: &Transform) -> (Range<usize>, Range<usize>) {
+fn tiles_occupied(mover: &MovementState, transform: &Transform) -> (Range<i16>, Range<i16>) {
     // Get corners of mover by adding scale to position
     let top_right: Vec2 = mover.position + transform.scale.truncate() / 2.;
     let bottom_left: Vec2 = mover.position - transform.scale.truncate() / 2.;

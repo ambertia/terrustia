@@ -1,11 +1,11 @@
 use bevy::{math::bounding::Aabb2d, prelude::*};
 
 #[derive(Resource)]
-pub struct GameMap(Vec<Vec<TileData>>);
+pub struct GameMap(HashMap<(i16, i16), TileData>);
 
 impl GameMap {
-    pub fn tile_at(&self, x: usize, y: usize) -> &TileData {
-        &self.0[x][y]
+    pub fn tile_at(&self, x: i16, y: i16) -> &TileData {
+        &self.0[&(x, y)]
     }
 }
 
