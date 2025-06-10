@@ -11,7 +11,7 @@ impl GameMap {
 
 /// Contain the stateful data within a tile
 #[derive(Component)]
-struct TileData {
+pub struct TileData {
     fg_id: usize, // Foreground tile id
     bg_id: usize, // Background tile id
     solid: bool,  // Should entities collide with the tile?
