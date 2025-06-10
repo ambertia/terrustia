@@ -66,7 +66,7 @@ fn accel_input(
     input_direction.normalize_or_zero();
 
     // Apply an impulse to the player based on the inputs
-    player.velocity += input_direction * PLAYER_ACCEL;
+    player.velocity += input_direction * PLAYER_ACCEL * time_fixed.delta_secs();
 }
 
 const VELOCITY_MAX: f32 = 300.;
