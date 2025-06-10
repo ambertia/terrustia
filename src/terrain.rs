@@ -1,4 +1,6 @@
-use bevy::{math::bounding::Aabb2d, prelude::*};
+use bevy::{math::bounding::Aabb2d, platform::collections::HashMap, prelude::*};
+
+use crate::BLOCK_SIZE;
 
 #[derive(Resource)]
 pub struct GameMap(HashMap<(i16, i16), TileData>);
@@ -23,4 +25,13 @@ impl TileData {
     }
 }
 
-pub fn map_space_to_aabb2d(x: usize, y: usize) -> Aabb2d {}
+/// Return a bounding box in world space based on map coordinates
+pub fn map_space_to_aabb2d(x: i16, y: i16) -> Aabb2d {
+    Aabb2d::new(
+        Vec2::new(
+            f32::from(x) + BLOCK_SIZE / 2.,
+            f32::from(y) + BLOCK_SIZE / 2.,
+        ),
+        Vec2::new(BLOCK_SIZE / 2., BLOCK_SIZE / 2.),
+    )
+}
