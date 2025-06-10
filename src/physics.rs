@@ -15,7 +15,7 @@ impl Plugin for PhysicsPlugin {
                 block_collisions,
                 position_update,
             ),
-        )
+        );
     }
 }
 
