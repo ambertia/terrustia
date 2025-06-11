@@ -19,7 +19,8 @@ impl Plugin for PhysicsPlugin {
                 velocity_cap,
                 block_collisions,
                 position_update,
-            ),
+            )
+                .chain(),
         )
         .add_systems(Update, transform_update);
     }
