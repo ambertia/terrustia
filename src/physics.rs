@@ -89,6 +89,7 @@ fn velocity_cap(movers: Query<&mut MovementState>) {
 #[derive(Event)]
 struct Collision(CollisionSide);
 
+/// Represents what side of a moving object a collision occurs on
 enum CollisionSide {
     Top,
     Bottom,
@@ -107,6 +108,11 @@ fn block_collisions(
         let (movement_state, transform) = mover;
         let (range_x, range_y) = tiles_occupied(movement_state, transform);
 
+        // Initialize a variable to track collision sides
+        // TODO: What data structure to use to track collisions by side? Off-the-shelf Vecs would
+        // provide x,y indexing, but that seems unnecessary when I could use a simple tuple instead
+        let mut collision_directions: (i32, i32) = (0, 0);
+
         // Iterate over the nearby blocks
         // Have to Clone the ranges because they can't be Copy'd for implicit move (compiler whines)
         for x in range_x.clone() {
@@ -117,20 +123,36 @@ fn block_collisions(
                     continue;
                 }
 
-                // Fire a Collision event with the appropriate Side based on the closest collision
-                // point relative to entity center
+                // TODO: Analyze all nearby blocks before sending out a single Collision event for
+                // the most "important" side - perhaps add the offsets together?
+                // This would be fucky cause blocks that are worse offenders have smaller offsets
+
+                // Change tuple depending on what side of the mover this block is colliding with
                 let height_diff = (transform.scale.y - transform.scale.x) / 2.0;
                 let offset = movement_state.position
                     - terrain::map_space_to_aabb2d(x, y).closest_point(movement_state.position);
                 if offset.x.abs() > offset.y.abs() - height_diff {
                     if offset.x < 0.0 {
-                        events.write(Collision(CollisionSide::Right));
+                        collision_directions.0 += 1;
                     } else {
-                        events.write(Collision(CollisionSide::Left));
+                        collision_directions.0 -= 1;
                     }
                 } else if offset.y < 0.0 {
-                    events.write(Collision(CollisionSide::Top));
+                    collision_directions.1 += 1;
                 } else {
+                    collision_directions.1 -= 1;
+                }
+
+                // Fire a single Collision event based on the most "important" direction
+                if collision_directions.0.abs() > collision_directions.1.abs() {
+                    if collision_directions.0 > 0 {
+                        events.write(Collision(CollisionSide::Right));
+                    } else if collision_directions.0 < 0 {
+                        events.write(Collision(CollisionSide::Left));
+                    }
+                } else if collision_directions.1 > 0 {
+                    events.write(Collision(CollisionSide::Top));
+                } else if collision_directions.1 < 0 {
                     events.write(Collision(CollisionSide::Bottom));
                 }
             }
