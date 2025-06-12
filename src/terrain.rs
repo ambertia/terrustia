@@ -19,9 +19,13 @@ pub struct TileData {
     solid: bool,  // Should entities collide with the tile?
 }
 
-impl TileData {
-    pub fn has_solid(&self) -> bool {
-        self.solid
+impl Default for TileData {
+    fn default() -> Self {
+        TileData {
+            fg_id: 1,
+            bg_id: 1,
+            solid: true,
+        }
     }
 }
 
