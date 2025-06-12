@@ -6,8 +6,16 @@ use crate::BLOCK_SIZE;
 pub struct GameMap(HashMap<(i16, i16), TileData>);
 
 impl GameMap {
-    pub fn tile_at(&self, x: i16, y: i16) -> &TileData {
-        &self.0[&(x, y)]
+    /// Destroy a tile at given map coordinates and return its ID
+    pub fn destroy_at(&mut self, x: i16, y: i16) -> usize {
+        let tile = self.0.get_mut(&(x, y)).unwrap();
+        let old_fg_id = tile.fg_id;
+        tile.fg_id = 0;
+        tile.solid = false;
+        old_fg_id
+    }
+    pub fn solid_at(&self, x: i16, y: i16) -> bool {
+        self.0.get(&(x, y)).unwrap().solid
     }
 }
 

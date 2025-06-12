@@ -119,8 +119,7 @@ fn block_collisions(
         for x in range_x.clone() {
             for y in range_y.clone() {
                 // Fetch tile data. Disregard this tile if it isn't collidable
-                let tile = game_map.tile_at(x, y);
-                if !tile.has_solid() {
+                if !game_map.solid_at(x, y) {
                     continue;
                 }
 
