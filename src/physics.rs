@@ -28,9 +28,18 @@ impl Plugin for PhysicsPlugin {
 
 // Struct to contain physics data for moving entities
 #[derive(Component, Default)]
-struct MovementState {
+pub struct MovementState {
     position: Vec2,
     velocity: Vec2,
+}
+
+impl MovementState {
+    pub fn from_pos(x: f32, y: f32) -> MovementState {
+        MovementState {
+            position: Vec2::new(x, y),
+            ..default()
+        }
+    }
 }
 
 const DRAG_FACTOR: f32 = 0.05;
