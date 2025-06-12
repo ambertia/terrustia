@@ -55,6 +55,13 @@ struct TileDestroyed {
     position: I16Vec2,
 }
 
+/// Modify tiles according to what happens in the world
+fn tile_modifications(mut tile_events: EventReader<TileDestroyed>, mut game_map: ResMut<GameMap>) {
+    for event in tile_events.read() {
+        game_map.destroy_at(event.position.x, event.position.y);
+    }
+}
+
 /// Return a bounding box in world space based on map coordinates
 pub fn map_space_to_aabb2d(x: i16, y: i16) -> Aabb2d {
     Aabb2d::new(
