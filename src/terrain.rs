@@ -5,13 +5,12 @@ use bevy::{
     prelude::*,
 };
 
-use crate::BLOCK_SIZE;
-
 pub struct TerrainPlugin;
 
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(FixedUpdate, tile_modifications)
+        app.add_systems(Startup, build_terrain)
+            .add_systems(FixedUpdate, tile_modifications)
             .add_systems(Update, tile_sprite_updates);
     }
 }
@@ -74,6 +73,27 @@ fn tile_sprite_updates(tiles: Query<(&TileData, &mut Sprite), Changed<TileData>>
             sprite.color = Color::from(CHOCOLATE);
         } else {
             sprite.color = Color::from(SADDLE_BROWN);
+        }
+    }
+}
+
+const BLOCKS_X: i16 = 80;
+const BLOCKS_Y: i16 = 40;
+const BLOCK_SIZE: f32 = 10.;
+/// Run on application setup to build the map data structure and spawn entities
+fn build_terrain(mut game_map: ResMut<GameMap>, mut commands: Commands) {
+    // Blocks are spawned from top-left to bottom-right. BLOCKS_X determines leftmost coordinate.
+    for i in (-BLOCKS_X / 2)..(BLOCKS_X / 2) {
+        for j in 0..(-1 * BLOCKS_Y) {
+            commands.spawn((
+                game_map.0.insert((i, j), TileData::default()).unwrap(), // TileData
+                Sprite::default(),
+                Transform {
+                    translation: Vec3::new(f32::from(i), f32::from(j), 0.),
+                    scale: Vec3::new(BLOCK_SIZE, BLOCK_SIZE, 0.0),
+                    ..default()
+                },
+            ));
         }
     }
 }
