@@ -1,4 +1,5 @@
 use bevy::{
+    color::palettes::css::{CHOCOLATE, SADDLE_BROWN},
     math::{I16Vec2, bounding::Aabb2d},
     platform::collections::HashMap,
     prelude::*,
@@ -59,6 +60,21 @@ struct TileDestroyed {
 fn tile_modifications(mut tile_events: EventReader<TileDestroyed>, mut game_map: ResMut<GameMap>) {
     for event in tile_events.read() {
         game_map.destroy_at(event.position.x, event.position.y);
+    }
+}
+
+/// Modify the Sprites of Entities with TileData Components that were just spawned or modified
+fn tile_sprite_updates(tiles: Query<(&TileData, &mut Sprite), Changed<TileData>>) {
+    // Right now tiles can be solid dirt, or background dirt. This means the logic for changing the
+    // sprites can be very simple, but it will get complicated quickly as new blocks are added and
+    // require referencing a resource of some kind.
+    for tile in tiles {
+        let (tile_data, mut sprite) = tile;
+        if tile_data.solid {
+            sprite.color = Color::from(CHOCOLATE);
+        } else {
+            sprite.color = Color::from(SADDLE_BROWN);
+        }
     }
 }
 
