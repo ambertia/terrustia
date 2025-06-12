@@ -1,4 +1,8 @@
-use bevy::{math::bounding::Aabb2d, platform::collections::HashMap, prelude::*};
+use bevy::{
+    math::{I16Vec2, bounding::Aabb2d},
+    platform::collections::HashMap,
+    prelude::*,
+};
 
 use crate::BLOCK_SIZE;
 
@@ -35,6 +39,11 @@ impl Default for TileData {
             solid: true,
         }
     }
+}
+
+#[derive(Event)]
+struct TileDestroyed {
+    position: I16Vec2,
 }
 
 /// Return a bounding box in world space based on map coordinates
