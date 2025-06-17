@@ -3,7 +3,9 @@ use bevy::{
     math::{I16Vec2, bounding::Aabb2d},
     platform::collections::HashMap,
     prelude::*,
+    window::PrimaryWindow,
 };
+use round_to::{CeilTo, FloorTo};
 
 pub struct TerrainPlugin;
 
@@ -55,6 +57,25 @@ impl Default for TileData {
 #[derive(Event)]
 struct TileDestroyed {
     position: I16Vec2,
+}
+
+fn tile_interaction(
+    mut tile_events: EventWriter<TileDestroyed>,
+    camera: Single<(&Camera, &GlobalTransform)>,
+    mouse: Res<ButtonInput<MouseButton>>,
+    window: Single<&Window, With<PrimaryWindow>>,
+) {
+    // Only try to break blocks if the left mouse button is pressed
+    if !mouse.pressed(MouseButton::Left) {
+        return;
+    }
+
+    // Get the mouse position and convert to world space coordinates
+    let cursor_pos = window.cursor_position().unwrap();
+    let world_pos = camera.0.viewport_to_world_2d(camera.1, cursor_pos).unwrap();
+    tile_events.write(TileDestroyed {
+        position: I16Vec2::new(world_pos.x.floor_to(), world_pos.y.ceil_to()),
+    });
 }
 
 /// Modify tiles according to what happens in the world
