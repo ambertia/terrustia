@@ -96,27 +96,12 @@ fn velocity_cap(movers: Query<&mut MovementState>) {
     }
 }
 
-#[derive(Event)]
-struct Collision(CollisionSide);
-
-/// Represents what side of a moving object a collision occurs on
-enum CollisionSide {
-    Top,
-    Bottom,
-    Left,
-    Right,
-}
-
 /// Check for collisions between entities and nearby solid objects, and fire a CollisionEvent
-fn block_collisions(
-    movers: Query<(&MovementState, &Transform)>,
-    game_map: Res<GameMap>,
-    mut events: EventWriter<Collision>,
-) {
+fn block_collisions(movers: Query<(&mut MovementState, &Transform)>, game_map: Res<GameMap>) {
     for mover in movers {
         // Get the range of tile coordinates to check for blocks based on the mover's position and size
-        let (movement_state, transform) = mover;
-        let (range_x, range_y) = tiles_occupied(movement_state, transform);
+        let (mut movement_state, transform) = mover;
+        let (range_x, range_y) = tiles_occupied(&movement_state, transform);
 
         // Initialize a variable to track collision sides
         // TODO: What data structure to use to track collisions by side? Off-the-shelf Vecs would
@@ -152,17 +137,17 @@ fn block_collisions(
                     collision_directions.1 -= 1;
                 }
 
-                // Fire a single Collision event based on the most "important" direction
+                // Modify velocity based on which side of the player a collision happens on
                 if collision_directions.0.abs() > collision_directions.1.abs() {
                     if collision_directions.0 > 0 {
-                        events.write(Collision(CollisionSide::Right));
+                        movement_state.velocity.x = movement_state.velocity.x * -1.; // Right
                     } else if collision_directions.0 < 0 {
-                        events.write(Collision(CollisionSide::Left));
+                        movement_state.velocity.x = movement_state.velocity.x * -1.; // Left
                     }
                 } else if collision_directions.1 > 0 {
-                    events.write(Collision(CollisionSide::Top));
+                    movement_state.velocity.y = 0.; // Top
                 } else if collision_directions.1 < 0 {
-                    events.write(Collision(CollisionSide::Bottom));
+                    movement_state.velocity.y = movement_state.velocity.y * -1.; // Bottom
                 }
             }
         }
