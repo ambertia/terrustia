@@ -112,8 +112,13 @@ fn block_collisions(movers: Query<(&mut MovementState, &Transform)>, game_map: R
         for x in range_x.clone() {
             for y in range_y.clone() {
                 // Fetch tile data. Disregard this tile if it isn't collidable
-                if !game_map.solid_at(x, y) {
-                    continue;
+                match game_map.solid_at(x, y) {
+                    Some(b) => {
+                        if !b {
+                            continue;
+                        }
+                    }
+                    None => continue,
                 }
 
                 // TODO: Analyze all nearby blocks before sending out a single Collision event for

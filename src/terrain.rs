@@ -31,8 +31,11 @@ impl GameMap {
         tile.solid = false;
         old_fg_id
     }
-    pub fn solid_at(&self, x: i16, y: i16) -> bool {
-        self.0.get(&(x, y)).unwrap().solid
+    pub fn solid_at(&self, x: i16, y: i16) -> Option<bool> {
+        match self.0.get(&(x, y)) {
+            Some(td) => Some(td.solid),
+            None => None,
+        }
     }
 }
 
