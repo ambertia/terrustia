@@ -9,8 +9,10 @@ pub struct TerrainPlugin;
 
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, build_terrain)
-            .add_systems(FixedUpdate, tile_modifications)
+        app.insert_resource(GameMap { 0: HashMap::new() })
+            .add_event::<TileDestroyed>()
+            .add_systems(Startup, build_terrain)
+            .add_systems(FixedUpdate, (tile_interaction, tile_modifications).chain())
             .add_systems(Update, tile_sprite_updates);
     }
 }
