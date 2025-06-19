@@ -13,8 +13,9 @@ impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<GameMap>()
             .add_event::<TileDestroyed>()
+            .add_observer(tile_modification)
             .add_systems(Startup, build_terrain)
-            .add_systems(FixedUpdate, (tile_interaction, tile_modifications).chain())
+            .add_systems(FixedUpdate, tile_interaction)
             .add_systems(Update, tile_sprite_updates);
     }
 }
@@ -64,11 +65,13 @@ impl TileData {
 #[derive(Event)]
 struct TileDestroyed;
 
+/// Detect and trigger events on tiles by mouse input
 fn tile_interaction(
-    mut tile_events: EventWriter<TileDestroyed>,
+    mut commands: Commands,
     camera: Single<(&Camera, &GlobalTransform)>,
     mouse: Res<ButtonInput<MouseButton>>,
     window: Single<&Window, With<PrimaryWindow>>,
+    game_map: Res<GameMap>,
 ) {
     // Only try to break blocks if the left mouse button is pressed
     if !mouse.pressed(MouseButton::Left) {
@@ -78,16 +81,22 @@ fn tile_interaction(
     // Get the mouse position and convert to world space coordinates
     let cursor_pos = window.cursor_position().unwrap();
     let world_pos = camera.0.viewport_to_world_2d(camera.1, cursor_pos).unwrap();
-    tile_events.write(TileDestroyed {
-        position: I16Vec2::new(world_pos.x.floor_to(), world_pos.y.ceil_to()),
-    });
+
+    // Trigger TileDestroyed observers on the tile occupying those coordinates
+    let tile_option = game_map
+        .0
+        .get(&(world_pos.x.floor_to(), world_pos.y.ceil_to()));
+    if let Some(t) = tile_option {
+        // Entities implement Clone since they wrap an identifier for the ECS (like a key)
+        commands.trigger_targets(TileDestroyed, t.to_owned());
+    }
 }
 
 /// Modify tiles according to what happens in the world
-fn tile_modifications(mut tile_events: EventReader<TileDestroyed>, mut game_map: ResMut<GameMap>) {
-    for event in tile_events.read() {
-        game_map.destroy_at(event.position.x, event.position.y);
-    }
+fn tile_modification(trigger: Trigger<TileDestroyed, TileData>, mut tiles: Query<&mut TileData>) {
+    let mut tile = tiles.get_mut(trigger.target()).unwrap();
+    tile.fg_id = 0;
+    tile.solid = false;
 }
 
 /// Modify the Sprites of Entities with TileData Components that were just spawned or modified
