@@ -121,7 +121,7 @@ const BLOCK_SIZE: f32 = 10.;
 fn build_terrain(mut game_map: ResMut<GameMap>, mut commands: Commands) {
     // Blocks are spawned from top-left to bottom-right. BLOCKS_X determines leftmost coordinate.
     for i in (-BLOCKS_X / 2)..(BLOCKS_X / 2) {
-        for j in 0..(-1 * BLOCKS_Y) {
+        for j in (-1 * BLOCKS_Y)..0 {
             // Spawn tile in the world
             let tile_entity = commands
                 .spawn((
