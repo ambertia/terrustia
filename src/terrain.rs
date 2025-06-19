@@ -58,10 +58,10 @@ impl Default for TileData {
     }
 }
 
-#[derive(Event)]
-struct TileDestroyed {
-    position: I16Vec2,
 }
+
+#[derive(Event)]
+struct TileDestroyed;
 
 fn tile_interaction(
     mut tile_events: EventWriter<TileDestroyed>,
