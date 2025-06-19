@@ -24,19 +24,9 @@ impl Plugin for TerrainPlugin {
 pub struct GameMap(HashMap<(i16, i16), Entity>);
 
 impl GameMap {
-    /// Destroy a tile at given map coordinates and return its ID
-    pub fn destroy_at(&mut self, x: i16, y: i16) -> usize {
-        let tile = self.0.get_mut(&(x, y)).unwrap();
-        let old_fg_id = tile.fg_id;
-        tile.fg_id = 0;
-        tile.solid = false;
-        old_fg_id
-    }
-    pub fn solid_at(&self, x: i16, y: i16) -> Option<bool> {
-        match self.0.get(&(x, y)) {
-            Some(td) => Some(td.solid),
-            None => None,
-        }
+    // Getter function to protect GameMap's internal type's visibility
+    pub fn get_tile(&self, x: i16, y: i16) -> Option<&Entity> {
+        self.0.get(&(x, y))
     }
 }
 
@@ -58,6 +48,17 @@ impl Default for TileData {
     }
 }
 
+impl TileData {
+    fn destroy(&mut self) -> usize {
+        let old_tile_id = self.fg_id;
+        self.fg_id = 0;
+        self.solid = false;
+        old_tile_id
+    }
+
+    pub fn is_solid(&self) -> bool {
+        self.solid
+    }
 }
 
 #[derive(Event)]
