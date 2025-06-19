@@ -11,31 +11,23 @@ pub struct TerrainPlugin;
 
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(GameMap { 0: HashMap::new() })
+        app.init_resource::<GameMap>()
             .add_event::<TileDestroyed>()
+            .add_observer(tile_modification)
             .add_systems(Startup, build_terrain)
-            .add_systems(FixedUpdate, (tile_interaction, tile_modifications).chain())
+            .add_systems(FixedUpdate, tile_interaction)
             .add_systems(Update, tile_sprite_updates);
     }
 }
 
-#[derive(Resource)]
-pub struct GameMap(HashMap<(i16, i16), TileData>);
+/// Resource to associate tile entities in the ECS with map coordinates
+#[derive(Resource, Default)]
+pub struct GameMap(HashMap<(i16, i16), Entity>);
 
 impl GameMap {
-    /// Destroy a tile at given map coordinates and return its ID
-    pub fn destroy_at(&mut self, x: i16, y: i16) -> usize {
-        let tile = self.0.get_mut(&(x, y)).unwrap();
-        let old_fg_id = tile.fg_id;
-        tile.fg_id = 0;
-        tile.solid = false;
-        old_fg_id
-    }
-    pub fn solid_at(&self, x: i16, y: i16) -> Option<bool> {
-        match self.0.get(&(x, y)) {
-            Some(td) => Some(td.solid),
-            None => None,
-        }
+    // Getter function to protect GameMap's internal type's visibility
+    pub fn get_tile(&self, x: i16, y: i16) -> Option<&Entity> {
+        self.0.get(&(x, y))
     }
 }
 
@@ -57,16 +49,29 @@ impl Default for TileData {
     }
 }
 
-#[derive(Event)]
-struct TileDestroyed {
-    position: I16Vec2,
+impl TileData {
+    fn destroy(&mut self) -> usize {
+        let old_tile_id = self.fg_id;
+        self.fg_id = 0;
+        self.solid = false;
+        old_tile_id
+    }
+
+    pub fn is_solid(&self) -> bool {
+        self.solid
+    }
 }
 
+#[derive(Event)]
+struct TileDestroyed;
+
+/// Detect and trigger events on tiles by mouse input
 fn tile_interaction(
-    mut tile_events: EventWriter<TileDestroyed>,
+    mut commands: Commands,
     camera: Single<(&Camera, &GlobalTransform)>,
     mouse: Res<ButtonInput<MouseButton>>,
     window: Single<&Window, With<PrimaryWindow>>,
+    game_map: Res<GameMap>,
 ) {
     // Only try to break blocks if the left mouse button is pressed
     if !mouse.pressed(MouseButton::Left) {
@@ -76,16 +81,22 @@ fn tile_interaction(
     // Get the mouse position and convert to world space coordinates
     let cursor_pos = window.cursor_position().unwrap();
     let world_pos = camera.0.viewport_to_world_2d(camera.1, cursor_pos).unwrap();
-    tile_events.write(TileDestroyed {
-        position: I16Vec2::new(world_pos.x.floor_to(), world_pos.y.ceil_to()),
-    });
+
+    // Trigger TileDestroyed observers on the tile occupying those coordinates
+    let tile_option = game_map
+        .0
+        .get(&(world_pos.x.floor_to(), world_pos.y.ceil_to()));
+    if let Some(t) = tile_option {
+        // Entities implement Clone since they wrap an identifier for the ECS (like a key)
+        commands.trigger_targets(TileDestroyed, t.to_owned());
+    }
 }
 
 /// Modify tiles according to what happens in the world
-fn tile_modifications(mut tile_events: EventReader<TileDestroyed>, mut game_map: ResMut<GameMap>) {
-    for event in tile_events.read() {
-        game_map.destroy_at(event.position.x, event.position.y);
-    }
+fn tile_modification(trigger: Trigger<TileDestroyed, TileData>, mut tiles: Query<&mut TileData>) {
+    let mut tile = tiles.get_mut(trigger.target()).unwrap();
+    tile.fg_id = 0;
+    tile.solid = false;
 }
 
 /// Modify the Sprites of Entities with TileData Components that were just spawned or modified
@@ -110,16 +121,22 @@ const BLOCK_SIZE: f32 = 10.;
 fn build_terrain(mut game_map: ResMut<GameMap>, mut commands: Commands) {
     // Blocks are spawned from top-left to bottom-right. BLOCKS_X determines leftmost coordinate.
     for i in (-BLOCKS_X / 2)..(BLOCKS_X / 2) {
-        for j in (-1 * BLOCKS_Y)..0 {
-            commands.spawn((
-                game_map.0.insert((i, j), TileData::default()).unwrap(), // TileData
-                Sprite::default(),
-                Transform {
-                    translation: Vec3::new(f32::from(i), f32::from(j), 0.),
-                    scale: Vec3::new(BLOCK_SIZE, BLOCK_SIZE, 0.0),
-                    ..default()
-                },
-            ));
+        for j in 0..(-1 * BLOCKS_Y) {
+            // Spawn tile in the world
+            let tile_entity = commands
+                .spawn((
+                    TileData::default(),
+                    Sprite::default(),
+                    Transform {
+                        translation: Vec3::new(f32::from(i), f32::from(j), 0.),
+                        scale: Vec3::new(BLOCK_SIZE, BLOCK_SIZE, 0.0),
+                        ..default()
+                    },
+                ))
+                .id();
+
+            // Add the tile to the map resource
+            game_map.0.insert((i, j), tile_entity);
         }
     }
 }

@@ -3,7 +3,7 @@ use std::ops::Range;
 use bevy::prelude::*;
 use round_to::{CeilTo, FloorTo};
 
-use crate::terrain::GameMap;
+use crate::terrain::{GameMap, TileData};
 use crate::{Player, terrain};
 
 pub struct PhysicsPlugin;
@@ -96,7 +96,11 @@ fn velocity_cap(movers: Query<&mut MovementState>) {
 }
 
 /// Check for collisions between entities and nearby solid objects, and fire a CollisionEvent
-fn block_collisions(movers: Query<(&mut MovementState, &Transform)>, game_map: Res<GameMap>) {
+fn block_collisions(
+    movers: Query<(&mut MovementState, &Transform)>,
+    game_map: Res<GameMap>,
+    tiles: Query<&TileData>,
+) {
     for mover in movers {
         // Get the range of tile coordinates to check for blocks based on the mover's position and size
         let (mut movement_state, transform) = mover;
@@ -111,14 +115,16 @@ fn block_collisions(movers: Query<(&mut MovementState, &Transform)>, game_map: R
         // Have to Clone the ranges because they can't be Copy'd for implicit move (compiler whines)
         for x in range_x.clone() {
             for y in range_y.clone() {
-                // Fetch tile data. Disregard this tile if it isn't collidable
-                match game_map.solid_at(x, y) {
-                    Some(b) => {
-                        if !b {
-                            continue;
-                        }
-                    }
-                    None => continue,
+                // Fetch tile data. Disregard this tile if it isn't collidable or doesn't exist.
+                let Some(tile) = game_map.get_tile(x, y) else {
+                    continue;
+                };
+                if !tiles
+                    .get(tile.to_owned())
+                    .expect(format!("No TileData for game_map {}, {}", x, y).as_str())
+                    .is_solid()
+                {
+                    continue;
                 }
 
                 // TODO: Analyze all nearby blocks before sending out a single Collision event for
