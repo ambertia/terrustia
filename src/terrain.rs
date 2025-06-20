@@ -142,6 +142,22 @@ fn build_terrain(mut game_map: ResMut<GameMap>, mut commands: Commands) {
     }
 }
 
+/// The range of tiles within which part of an object exists
+/// This takes world space coordinates and returns map coordinates
+pub fn occupied_tile_range(center: Vec2, size: Vec2) -> (I16Vec2, I16Vec2) {
+    // Get the edges of the object in world space
+    let top = center.y + size.y / 2.0;
+    let bottom = center.y - size.y / 2.0;
+    let right = center.x + size.x / 2.0;
+    let left = center.x - size.x / 2.0;
+
+    // Construct I16Vec2's representing map coordinates for the bottom-left and top-right tiles
+    let bottom_left = I16Vec2::new(left.floor_to(), bottom.floor_to());
+    let top_right = I16Vec2::new(right.ceil_to(), top.ceil_to());
+
+    (bottom_left, top_right)
+}
+
 /// Return a bounding box in world space based on map coordinates
 pub fn map_space_to_aabb2d(x: i16, y: i16) -> Aabb2d {
     Aabb2d::new(
