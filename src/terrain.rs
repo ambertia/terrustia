@@ -179,11 +179,11 @@ pub fn occupied_tile_range(center: Vec2, size: Vec2) -> (I16Vec2, I16Vec2) {
 }
 
 /// Return a bounding box in world space based on map coordinates
-pub fn map_space_to_aabb2d(x: i16, y: i16) -> Aabb2d {
+pub fn tile_coord_to_aabb2d(x: i16, y: i16) -> Aabb2d {
     Aabb2d::new(
         Vec2::new(
-            f32::from(x) + BLOCK_SIZE / 2.,
-            f32::from(y) + BLOCK_SIZE / 2.,
+            f32::from(x) * BLOCK_SIZE + BLOCK_SIZE / 2.,
+            f32::from(y) * BLOCK_SIZE + BLOCK_SIZE / 2.,
         ),
         Vec2::new(BLOCK_SIZE / 2., BLOCK_SIZE / 2.),
     )
