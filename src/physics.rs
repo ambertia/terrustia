@@ -1,10 +1,11 @@
 use std::ops::Range;
 
+use bevy::math::bounding::Aabb2d;
 use bevy::prelude::*;
 use round_to::{CeilTo, FloorTo};
 
-use crate::terrain::{GameMap, TileData};
-use crate::{Player, terrain};
+use crate::Player;
+use crate::terrain::{GameMap, TileData, get_region_tiles, occupied_tile_range};
 
 pub struct PhysicsPlugin;
 
@@ -16,7 +17,7 @@ impl Plugin for PhysicsPlugin {
                 accel_env,
                 accel_input,
                 velocity_cap,
-                block_collisions,
+                check_collisions,
                 position_update,
             )
                 .chain(),
@@ -95,71 +96,80 @@ fn velocity_cap(movers: Query<&mut MovementState>) {
     }
 }
 
-/// Check for collisions between entities and nearby solid objects, and fire a CollisionEvent
-fn block_collisions(
+fn check_collisions(
     movers: Query<(&mut MovementState, &Transform)>,
+    tiles: Query<(&TileData, &Transform)>,
     game_map: Res<GameMap>,
-    tiles: Query<&TileData>,
 ) {
     for mover in movers {
-        // Get the range of tile coordinates to check for blocks based on the mover's position and size
+        // Variables to track which edges of the mover are colliding with something
+        let mut right = false;
+        let mut left = false;
+        let mut top = false;
+        let mut bottom = false;
+
         let (mut movement_state, transform) = mover;
-        let (range_x, range_y) = tiles_occupied(&movement_state, transform);
 
-        // Initialize a variable to track collision sides
-        // TODO: What data structure to use to track collisions by side? Off-the-shelf Vecs would
-        // provide x,y indexing, but that seems unnecessary when I could use a simple tuple instead
-        let mut collision_directions: (i32, i32) = (0, 0);
+        // Collision side detection is affected by the relative dimensions of the mover
+        let height_diff = (transform.scale.y - transform.scale.x) / 2.0;
+        // The range of tile coordinates the mover occupies depends on its position and size
+        let (bottom_left, top_right) =
+            occupied_tile_range(movement_state.position, transform.scale.truncate());
 
-        // Iterate over the nearby blocks
-        // Have to Clone the ranges because they can't be Copy'd for implicit move (compiler whines)
-        for x in range_x.clone() {
-            for y in range_y.clone() {
-                // Fetch tile data. Disregard this tile if it isn't collidable or doesn't exist.
-                let Some(tile) = game_map.get_tile(x, y) else {
-                    continue;
-                };
-                if !tiles
-                    .get(tile.to_owned())
-                    .expect(format!("No TileData for game_map {}, {}", x, y).as_str())
-                    .is_solid()
-                {
-                    continue;
-                }
+        // Get a Vec<Entity> for all extant nearby tiles
+        let tile_entities = get_region_tiles(bottom_left, top_right, &game_map);
 
-                // TODO: Analyze all nearby blocks before sending out a single Collision event for
-                // the most "important" side - perhaps add the offsets together?
-                // This would be fucky cause blocks that are worse offenders have smaller offsets
+        // Iterate over all the nearby tiles
+        for tile in tile_entities {
+            // Get the tile's Query data
+            let Ok((tile_data, tile_transform)) = tiles.get(tile) else {
+                continue;
+            };
 
-                // Change tuple depending on what side of the mover this block is colliding with
-                let height_diff = (transform.scale.y - transform.scale.x) / 2.0;
-                let offset = movement_state.position
-                    - terrain::map_space_to_aabb2d(x, y).closest_point(movement_state.position);
-                if offset.x.abs() > offset.y.abs() - height_diff {
-                    if offset.x < 0.0 {
-                        collision_directions.0 += 1;
-                    } else {
-                        collision_directions.0 -= 1;
-                    }
-                } else if offset.y < 0.0 {
-                    collision_directions.1 += 1;
-                } else {
-                    collision_directions.1 -= 1;
-                }
+            // Don't collide if the tile isn't solid
+            if !tile_data.is_solid() {
+                continue;
+            };
 
-                // Modify velocity based on which side of the player a collision happens on
-                if collision_directions.0.abs() > collision_directions.1.abs() {
-                    if collision_directions.0 > 0 {
-                        movement_state.velocity.x = movement_state.velocity.x * -1.; // Right
-                    } else if collision_directions.0 < 0 {
-                        movement_state.velocity.x = movement_state.velocity.x * -1.; // Left
-                    }
-                } else if collision_directions.1 > 0 {
-                    movement_state.velocity.y = 0.; // Top
-                } else if collision_directions.1 < 0 {
-                    movement_state.velocity.y = movement_state.velocity.y * -1.; // Bottom
-                }
+            // Determine collision side using bounding boxes and mark accordingly
+            let tile_box = Aabb2d::new(
+                tile_transform.translation.truncate(),
+                tile_transform.scale.truncate() / 2.0,
+            );
+
+            let offset = movement_state.position - tile_box.closest_point(movement_state.position);
+
+            // To actually be touching, offsets must be within a certain range
+            if offset.x.abs() > transform.scale.x / 2.0 {
+                continue;
+            } else if offset.y.abs() > transform.scale.y / 2.0 {
+                continue;
             }
+
+            if offset.x.abs() > offset.y.abs() - height_diff {
+                if offset.x < 0.0 {
+                    right = true;
+                } else {
+                    left = true;
+                }
+            } else if offset.y < 0.0 {
+                top = true;
+            } else {
+                bottom = true;
+            }
+        }
+
+        // Modify the mover's velocity based on edge conditions
+        if left && movement_state.velocity.x < 0. {
+            movement_state.velocity.x *= -0.05;
+        } else if right && movement_state.velocity.x > 0. {
+            movement_state.velocity.x *= -0.05;
+        }
+
+        if bottom && movement_state.velocity.y < 0. {
+            movement_state.velocity.y *= -0.05;
+        } else if top && movement_state.velocity.y > 0. {
+            movement_state.velocity.y *= -0.05;
         }
     }
 }
