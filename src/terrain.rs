@@ -25,9 +25,12 @@ impl Plugin for TerrainPlugin {
 pub struct GameMap(HashMap<(i16, i16), Entity>);
 
 impl GameMap {
-    // Getter function to protect GameMap's internal type's visibility
-    pub fn get_tile(&self, x: i16, y: i16) -> Option<&Entity> {
-        self.0.get(&(x, y))
+    /// Return the tile under a certain position in world space
+    pub fn tile_under(&self, world_space: &Vec2) -> Option<Entity> {
+        match self.0.get(&world_to_map_coord(world_space)) {
+            Some(&e) => Some(e.to_owned()),
+            None => None,
+        }
     }
 }
 
@@ -83,12 +86,9 @@ fn tile_interaction(
     let world_pos = camera.0.viewport_to_world_2d(camera.1, cursor_pos).unwrap();
 
     // Trigger TileDestroyed observers on the tile occupying those coordinates
-    let tile_option = game_map
-        .0
-        .get(&(world_pos.x.floor_to(), world_pos.y.ceil_to()));
-    if let Some(t) = tile_option {
+    if let Some(t) = game_map.tile_under(&world_pos) {
         // Entities implement Clone since they wrap an identifier for the ECS (like a key)
-        commands.trigger_targets(TileDestroyed, t.to_owned());
+        commands.trigger_targets(TileDestroyed, t);
     }
 }
 
