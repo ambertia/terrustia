@@ -166,10 +166,10 @@ pub fn get_region_tiles(
 /// This takes world space coordinates and returns map coordinates
 pub fn occupied_tile_range(center: Vec2, size: Vec2) -> (I16Vec2, I16Vec2) {
     // Get the edges of the object in world space
-    let top = center.y + size.y / 2.0;
-    let bottom = center.y - size.y / 2.0;
-    let right = center.x + size.x / 2.0;
-    let left = center.x - size.x / 2.0;
+    let top = (center.y + size.y / 2.0) / BLOCK_SIZE;
+    let bottom = (center.y - size.y / 2.0) / BLOCK_SIZE;
+    let right = (center.x + size.x / 2.0) / BLOCK_SIZE;
+    let left = (center.x - size.x / 2.0) / BLOCK_SIZE;
 
     // Construct I16Vec2's representing map coordinates for the bottom-left and top-right tiles
     let bottom_left = I16Vec2::new(left.floor_to(), bottom.floor_to());
