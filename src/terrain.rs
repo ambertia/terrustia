@@ -188,3 +188,10 @@ pub fn tile_coord_to_aabb2d(x: i16, y: i16) -> Aabb2d {
         Vec2::new(BLOCK_SIZE / 2., BLOCK_SIZE / 2.),
     )
 }
+
+pub fn world_to_map_coord(world_space: &Vec2) -> (i16, i16) {
+    (
+        (world_space.x / BLOCK_SIZE).floor_to(),
+        (world_space.y / BLOCK_SIZE).ceil_to(),
+    )
+}
