@@ -142,6 +142,26 @@ fn build_terrain(mut game_map: ResMut<GameMap>, mut commands: Commands) {
     }
 }
 
+/// Return a vec of all extant tile entities within a rectangular coordinate region
+pub fn get_region_tiles(
+    // TODO: This requires the user to pass in a reference to a Resource, which is clunky
+    bottom_left: I16Vec2,
+    top_right: I16Vec2,
+    game_map: &GameMap,
+) -> Vec<Entity> {
+    let mut tiles: Vec<Entity> = Vec::new();
+
+    for i in bottom_left.x..top_right.x {
+        for j in bottom_left.y..top_right.y {
+            if let Some(&e) = game_map.0.get(&(i, j)) {
+                tiles.push(e.to_owned());
+            }
+        }
+    }
+
+    tiles
+}
+
 /// The range of tiles within which part of an object exists
 /// This takes world space coordinates and returns map coordinates
 pub fn occupied_tile_range(center: Vec2, size: Vec2) -> (I16Vec2, I16Vec2) {
