@@ -96,22 +96,26 @@ fn velocity_cap(movers: Query<&mut MovementState>) {
     }
 }
 
+#[derive(Default)]
+struct CollidingOn {
+    right: bool,
+    left: bool,
+    top: bool,
+    bottom: bool,
+}
+
+/// Check all movers for collisions with map tiles and alter their MovementStates
 fn check_collisions(
     movers: Query<(&mut MovementState, &Transform)>,
     tiles: Query<(&TileData, &Transform)>,
     game_map: Res<GameMap>,
 ) {
     for mover in movers {
-        // Variables to track which edges of the mover are colliding with something
-        let mut right = false;
-        let mut left = false;
-        let mut top = false;
-        let mut bottom = false;
+        // Track which edges of the mover are colliding with something
+        let mut mover_collisions = CollidingOn::default();
 
         let (mut movement_state, transform) = mover;
 
-        // Collision side detection is affected by the relative dimensions of the mover
-        let height_diff = (transform.scale.y - transform.scale.x) / 2.0;
         // The range of tile coordinates the mover occupies depends on its position and size
         let (bottom_left, top_right) =
             occupied_tile_range(movement_state.position, transform.scale.truncate());
@@ -132,43 +136,33 @@ fn check_collisions(
             };
 
             // Determine collision side using bounding boxes and mark accordingly
-            let tile_box = Aabb2d::new(
-                tile_transform.translation.truncate(),
-                tile_transform.scale.truncate() / 2.0,
-            );
-
-            let offset = movement_state.position - tile_box.closest_point(movement_state.position);
-
-            // To actually be touching, offsets must be within a certain range
-            if offset.x.abs() > transform.scale.x / 2.0 {
-                continue;
-            } else if offset.y.abs() > transform.scale.y / 2.0 {
-                continue;
-            }
-
-            if offset.x.abs() > offset.y.abs() - height_diff {
-                if offset.x < 0.0 {
-                    right = true;
-                } else {
-                    left = true;
-                }
-            } else if offset.y < 0.0 {
-                top = true;
-            } else {
-                bottom = true;
+            match get_collision(
+                // Source
+                Aabb2d::new(movement_state.position, transform.scale.truncate() / 2.),
+                // Target
+                Aabb2d::new(
+                    tile_transform.translation.truncate(),
+                    tile_transform.scale.truncate() / 2.,
+                ),
+            ) {
+                Some(Collision::Right) => mover_collisions.right = true,
+                Some(Collision::Left) => mover_collisions.left = true,
+                Some(Collision::Top) => mover_collisions.top = true,
+                Some(Collision::Bottom) => mover_collisions.bottom = true,
+                None => continue,
             }
         }
 
         // Modify the mover's velocity based on edge conditions
-        if left && movement_state.velocity.x < 0. {
+        if mover_collisions.left && movement_state.velocity.x < 0. {
             movement_state.velocity.x *= -0.05;
-        } else if right && movement_state.velocity.x > 0. {
+        } else if mover_collisions.right && movement_state.velocity.x > 0. {
             movement_state.velocity.x *= -0.05;
         }
 
-        if bottom && movement_state.velocity.y < 0. {
+        if mover_collisions.bottom && movement_state.velocity.y < 0. {
             movement_state.velocity.y *= -0.05;
-        } else if top && movement_state.velocity.y > 0. {
+        } else if mover_collisions.top && movement_state.velocity.y > 0. {
             movement_state.velocity.y *= -0.05;
         }
     }
