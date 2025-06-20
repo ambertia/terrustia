@@ -93,7 +93,7 @@ fn tile_interaction(
 }
 
 /// Modify tiles according to what happens in the world
-fn tile_modification(trigger: Trigger<TileDestroyed, TileData>, mut tiles: Query<&mut TileData>) {
+fn tile_modification(trigger: Trigger<TileDestroyed>, mut tiles: Query<&mut TileData>) {
     let mut tile = tiles.get_mut(trigger.target()).unwrap();
     tile.fg_id = 0;
     tile.solid = false;
