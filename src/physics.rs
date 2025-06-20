@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use bevy::math::bounding::Aabb2d;
+use bevy::math::bounding::{Aabb2d, BoundingVolume, IntersectsVolume};
 use bevy::prelude::*;
 use round_to::{CeilTo, FloorTo};
 
@@ -172,6 +172,55 @@ fn check_collisions(
             movement_state.velocity.y *= -0.05;
         }
     }
+}
+
+enum Collision {
+    Right,
+    Left,
+    Top,
+    Bottom,
+}
+/// Check for collisions between two bounding boxes and return depending on what side the collision
+/// occurs on. source is the "subject" of the collision (i.e. player), and target is the object
+/// being collided with (i.e. a block)
+fn get_collision(source: Aabb2d, target: Aabb2d) -> Option<Collision> {
+    if !source.intersects(&target) {
+        return None;
+    }
+
+    let offset = source.center() - target.closest_point(source.center());
+
+    // Get the margin. This implicitly compares how "deep" into the source the target closest point
+    // is relative to its nearest corner.
+    let margin = offset.abs() - source.half_size();
+
+    // Object is colliding if margin points to the third quadrant (both negative)
+    if margin.x > 0. || margin.y > 0. {
+        return None;
+    }
+
+    // Determine what side the collision occurs on based on the offset and the relative height and
+    // width of the source.
+    let proportion = {
+        let size = source.half_size();
+        size.y / size.x
+    };
+
+    let side = if offset.x.abs() > offset.y.abs() / proportion {
+        if offset.x < 0. {
+            Collision::Right
+        } else {
+            Collision::Left
+        }
+    } else {
+        if offset.y < 0. {
+            Collision::Top
+        } else {
+            Collision::Bottom
+        }
+    };
+
+    Some(side)
 }
 
 /// Return map coordinate ranges for all tiles at least partially occupied by the moving object.
