@@ -42,7 +42,7 @@ fn setup(
         MeshMaterial2d(materials.add(Color::WHITE)),
         Transform {
             translation: Vec3::new(0.0, 50.0, 0.0),
-            scale: Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT).extend(0.0),
+            scale: Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT).extend(1.0),
             ..default()
         },
     ));
