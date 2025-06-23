@@ -104,6 +104,8 @@ struct CollidingOn {
     bottom: bool,
 }
 
+// BUG: Player can get stuck in the floor slightly when hitting it at high speed, causing
+// collisions with blocks in the ground when moving side-to-side
 /// Check all movers for collisions with map tiles and alter their MovementStates
 fn check_collisions(
     movers: Query<(&mut MovementState, &Transform)>,
