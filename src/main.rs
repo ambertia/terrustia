@@ -20,9 +20,6 @@ fn main() {
 }
 
 #[derive(Component)]
-struct Block;
-
-#[derive(Component)]
 #[require(Transform, Sprite, MovementState)]
 struct Player;
 
