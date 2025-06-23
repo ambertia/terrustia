@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{color::palettes::css::WHITE, prelude::*};
 use physics::{MovementState, PhysicsPlugin};
 use terrain::TerrainPlugin;
 
@@ -24,19 +24,17 @@ fn main() {
 struct Player;
 
 // Initialize all the stuff in the world
-fn setup(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-) {
+fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
 
     // Spawn the player
     commands.spawn((
         Player,
         MovementState::from_pos(0.0, 50.0),
-        Mesh2d(meshes.add(Rectangle::default())),
-        MeshMaterial2d(materials.add(Color::WHITE)),
+        Sprite {
+            color: Color::from(WHITE),
+            ..default()
+        },
         Transform {
             translation: Vec3::new(0.0, 50.0, 0.0),
             scale: Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT).extend(1.0),
