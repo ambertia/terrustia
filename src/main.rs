@@ -36,8 +36,8 @@ fn setup(mut commands: Commands) {
             ..default()
         },
         Transform {
-            translation: Vec3::new(0.0, 50.0, 0.0),
-            scale: Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT).extend(1.0),
+            translation: Vec3::new(0., 50., 1.),
+            scale: Vec3::new(PLAYER_WIDTH, PLAYER_HEIGHT, 1.),
             ..default()
         },
     ));

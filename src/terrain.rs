@@ -128,10 +128,12 @@ fn build_terrain(mut game_map: ResMut<GameMap>, mut commands: Commands) {
                     TileData::default(),
                     Sprite::default(),
                     Transform {
-                        translation: (Vec2::new(f32::from(i) + 0.5, f32::from(j) - 0.5)
-                            * BLOCK_SIZE)
-                            .extend(0.),
-                        scale: Vec3::new(BLOCK_SIZE, BLOCK_SIZE, 1.0),
+                        translation: Vec3::new(
+                            (f32::from(i) + 0.5) * BLOCK_SIZE,
+                            (f32::from(j) - 0.5) * BLOCK_SIZE,
+                            -1.,
+                        ),
+                        scale: Vec3::new(BLOCK_SIZE, BLOCK_SIZE, 1.),
                         ..default()
                     },
                 ))
