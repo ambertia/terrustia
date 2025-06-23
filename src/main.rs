@@ -20,7 +20,7 @@ fn main() {
 }
 
 #[derive(Component)]
-#[require(Transform, Sprite, MovementState)]
+#[require(Transform, MovementState)]
 struct Player;
 
 // Initialize all the stuff in the world
