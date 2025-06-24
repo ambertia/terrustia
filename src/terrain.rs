@@ -45,9 +45,9 @@ pub struct TileData {
 impl Default for TileData {
     fn default() -> Self {
         TileData {
-            fg_id: 1,
-            bg_id: 1,
-            solid: true,
+            fg_id: 0,
+            bg_id: 0,
+            solid: false,
         }
     }
 }
