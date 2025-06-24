@@ -28,14 +28,15 @@ impl Plugin for PhysicsPlugin {
 
 // Struct to contain physics data for moving entities
 #[derive(Component, Default)]
-pub struct MovementState {
+pub struct PhysicsBody {
     position: Vec2,
     velocity: Vec2,
+    mass: f32,
 }
 
-impl MovementState {
-    pub fn from_pos(x: f32, y: f32) -> MovementState {
-        MovementState {
+impl PhysicsBody {
+    pub fn from_pos(x: f32, y: f32) -> PhysicsBody {
+        PhysicsBody {
             position: Vec2::new(x, y),
             ..default()
         }
@@ -45,7 +46,7 @@ impl MovementState {
 const DRAG_FACTOR: f32 = 0.05;
 const GRAVITY: f32 = -15.;
 /// Accelerate entities based on drag and gravity
-fn accel_env(movers: Query<&mut MovementState>, time_fixed: Res<Time<Fixed>>) {
+fn accel_env(movers: Query<&mut PhysicsBody>, time_fixed: Res<Time<Fixed>>) {
     for mut mover in movers {
         let drag_impulse = mover.velocity * DRAG_FACTOR * time_fixed.delta_secs();
         let grav_impulse = GRAVITY * time_fixed.delta_secs();
@@ -56,7 +57,7 @@ fn accel_env(movers: Query<&mut MovementState>, time_fixed: Res<Time<Fixed>>) {
 const PLAYER_ACCEL: f32 = 60.;
 /// Apply input-based acceleration to the character
 fn accel_input(
-    mut player: Single<&mut MovementState, With<Player>>,
+    mut player: Single<&mut PhysicsBody, With<Player>>,
     time_fixed: Res<Time<Fixed>>,
     keyboard: Res<ButtonInput<KeyCode>>,
 ) {
@@ -85,7 +86,7 @@ fn accel_input(
 
 const VELOCITY_MAX: f32 = 300.;
 /// Apply max speed to entities
-fn velocity_cap(movers: Query<&mut MovementState>) {
+fn velocity_cap(movers: Query<&mut PhysicsBody>) {
     for mut mover in movers {
         if mover.velocity.length() < VELOCITY_MAX {
             continue;
@@ -106,9 +107,9 @@ struct CollidingOn {
 
 // BUG: Player can get stuck in the floor slightly when hitting it at high speed, causing
 // collisions with blocks in the ground when moving side-to-side
-/// Check all movers for collisions with map tiles and alter their MovementStates
+/// Check all movers for collisions with map tiles and alter their PhysicsBodys
 fn check_collisions(
-    movers: Query<(&mut MovementState, &Transform)>,
+    movers: Query<(&mut PhysicsBody, &Transform)>,
     tiles: Query<(&TileData, &Transform)>,
     game_map: Res<GameMap>,
 ) {
@@ -220,7 +221,7 @@ fn get_collision(source: Aabb2d, target: Aabb2d) -> Option<Collision> {
 }
 
 /// Return map coordinate ranges for all tiles at least partially occupied by the moving object.
-fn tiles_occupied(mover: &MovementState, transform: &Transform) -> (Range<i16>, Range<i16>) {
+fn tiles_occupied(mover: &PhysicsBody, transform: &Transform) -> (Range<i16>, Range<i16>) {
     // Get corners of mover by adding scale to position
     let top_right: Vec2 = mover.position + transform.scale.truncate() / 2.;
     let bottom_left: Vec2 = mover.position - transform.scale.truncate() / 2.;
@@ -232,7 +233,7 @@ fn tiles_occupied(mover: &MovementState, transform: &Transform) -> (Range<i16>, 
 }
 
 /// Move entities in world space
-fn position_update(movers: Query<&mut MovementState>, time_fixed: Res<Time<Fixed>>) {
+fn position_update(movers: Query<&mut PhysicsBody>, time_fixed: Res<Time<Fixed>>) {
     for mut mover in movers {
         let position_delta = mover.velocity * time_fixed.delta_secs();
         mover.position += position_delta;
@@ -240,7 +241,7 @@ fn position_update(movers: Query<&mut MovementState>, time_fixed: Res<Time<Fixed
 }
 
 /// Move entities in screen space
-fn transform_update(movers: Query<(&MovementState, &mut Transform)>, time_fixed: Res<Time<Fixed>>) {
+fn transform_update(movers: Query<(&PhysicsBody, &mut Transform)>, time_fixed: Res<Time<Fixed>>) {
     for mover in movers {
         let (state, mut transform) = mover;
         transform.translation =

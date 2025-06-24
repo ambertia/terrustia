@@ -1,5 +1,5 @@
 use bevy::{color::palettes::css::WHITE, input::mouse::AccumulatedMouseScroll, prelude::*};
-use physics::{MovementState, PhysicsPlugin};
+use physics::{PhysicsBody, PhysicsPlugin};
 use terrain::TerrainPlugin;
 
 mod physics;
@@ -32,7 +32,7 @@ struct MainCamera;
 struct UiCoordinateText;
 
 #[derive(Component)]
-#[require(Transform, MovementState)]
+#[require(Transform, PhysicsBody)]
 struct Player;
 
 // Initialize all the stuff in the world
@@ -42,7 +42,7 @@ fn setup(mut commands: Commands) {
     // Spawn the player
     commands.spawn((
         Player,
-        MovementState::from_pos(0.0, 50.0),
+        PhysicsBody::from_pos(0.0, 50.0),
         Sprite {
             color: Color::from(WHITE),
             ..default()
