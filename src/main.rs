@@ -14,6 +14,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .insert_resource(ClearColor(Color::BLACK))
         .add_systems(Startup, setup)
+        .add_systems(Update, track_camera_to_player)
         .add_plugins(PhysicsPlugin)
         .add_plugins(TerrainPlugin)
         .run();
@@ -41,4 +42,20 @@ fn setup(mut commands: Commands) {
             ..default()
         },
     ));
+}
+
+const CATCH_UP_TIME: f32 = 0.33;
+fn track_camera_to_player(
+    mut camera: Single<&mut Transform, (With<Camera>, Without<Player>)>,
+    player: Single<&Transform, With<Player>>,
+    time: Res<Time>,
+) {
+    let target = Vec3::new(
+        player.translation.x,
+        player.translation.y,
+        camera.translation.z,
+    );
+    camera.translation = camera
+        .translation
+        .lerp(target, time.delta_secs() / CATCH_UP_TIME);
 }
