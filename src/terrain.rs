@@ -1,5 +1,5 @@
 use bevy::{
-    color::palettes::css::{CHOCOLATE, DEEP_SKY_BLUE, SADDLE_BROWN, SKY_BLUE},
+    color::palettes::css::{CHOCOLATE, DEEP_SKY_BLUE, SADDLE_BROWN},
     math::{I16Vec2, bounding::Aabb2d},
     platform::collections::HashMap,
     prelude::*,
