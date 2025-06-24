@@ -77,7 +77,7 @@ const ZOOM_SPEED: f32 = 1.;
 const ZOOM_MIN: f32 = 0.5;
 const ZOOM_MAX: f32 = 2.;
 fn zoom_camera(
-    mut projection: Single<&mut Projection, With<Camera>>,
+    projection: Single<&mut Projection, With<Camera>>,
     scroll_input: Res<AccumulatedMouseScroll>,
 ) {
     match projection.into_inner().into_inner() {
