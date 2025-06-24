@@ -21,12 +21,16 @@ fn main() {
 }
 
 #[derive(Component)]
+#[require(Camera2d)]
+struct MainCamera;
+
+#[derive(Component)]
 #[require(Transform, MovementState)]
 struct Player;
 
 // Initialize all the stuff in the world
 fn setup(mut commands: Commands) {
-    commands.spawn(Camera2d);
+    commands.spawn(MainCamera);
 
     // Spawn the player
     commands.spawn((
