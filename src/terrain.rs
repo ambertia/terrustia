@@ -120,6 +120,11 @@ fn tile_destruction(
 ) {
     let (mut tile, break_timer) = tiles.get_mut(trigger.target()).unwrap();
 
+    // Tiles that aren't solid can't be broken
+    if !tile.solid {
+        return;
+    }
+
     // Add a new timer to this tile if it's not already in the process of being broken
     // tile_interaction runs on FixedUpdate so use Time<Fixed> to advance stopwatches.
     // This observer will run at some arbitrary time after FixedUpdate, so use the
@@ -166,6 +171,8 @@ fn tile_sprite_updates(tiles: Query<(&TileData, &mut Sprite), Changed<TileData>>
         }
     }
 }
+
+fn tile_breaking_effect(tiles: Query<(&TileData, &BreakTimer, &mut Sprite), Changed<BreakTimer>>) {}
 
 const BLOCKS_X: i16 = 80;
 const BLOCKS_Y: i16 = 80;
