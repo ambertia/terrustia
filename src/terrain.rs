@@ -115,17 +115,27 @@ fn tile_sprite_updates(tiles: Query<(&TileData, &mut Sprite), Changed<TileData>>
 }
 
 const BLOCKS_X: i16 = 80;
-const BLOCKS_Y: i16 = 40;
+const BLOCKS_Y: i16 = 80;
 const BLOCK_SIZE: f32 = 10.;
 /// Run on application setup to build the map data structure and spawn tile entities
 fn build_terrain(mut game_map: ResMut<GameMap>, mut commands: Commands) {
     // Blocks are spawned from bottom-left to top-right. BLOCKS_X determines leftmost coordinate.
     for i in (-BLOCKS_X / 2)..(BLOCKS_X / 2) {
-        for j in (-1 * BLOCKS_Y)..0 {
+        for j in (-BLOCKS_Y / 2)..(BLOCKS_Y / 2) {
+            // Initial tile state depends on y value
+            let tile_data = match j > 0 {
+                true => TileData::default(),
+                false => TileData {
+                    fg_id: 1,
+                    bg_id: 1,
+                    solid: true,
+                },
+            };
+
             // Spawn tile in the world
             let tile_entity = commands
                 .spawn((
-                    TileData::default(),
+                    tile_data,
                     Sprite::default(),
                     Transform {
                         translation: Vec3::new(
