@@ -193,11 +193,21 @@ fn build_terrain(mut game_map: ResMut<GameMap>, mut commands: Commands) {
     for i in (-BLOCKS_X / 2)..(BLOCKS_X / 2) {
         for j in (-BLOCKS_Y / 2)..(BLOCKS_Y / 2) {
             // Initial tile state depends on y value
-            let tile_data = match j > 0 {
-                true => TileData::default(),
-                false => TileData {
+            let tile_data = match j {
+                1.. => TileData::default(),
+                0 => TileData {
+                    fg_id: 2,
+                    bg_id: 1,
+                    solid: true,
+                },
+                -10..0 => TileData {
                     fg_id: 1,
                     bg_id: 1,
+                    solid: true,
+                },
+                ..-10 => TileData {
+                    fg_id: 3,
+                    bg_id: 3,
                     solid: true,
                 },
             };
