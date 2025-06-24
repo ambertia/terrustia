@@ -1,5 +1,7 @@
 use bevy::{
-    color::palettes::tailwind::{AMBER_700, AMBER_900, CYAN_400, NEUTRAL_950},
+    color::palettes::tailwind::{
+        AMBER_700, AMBER_900, CYAN_400, GREEN_700, NEUTRAL_950, STONE_500, STONE_700,
+    },
     math::{I16Vec2, bounding::Aabb2d},
     platform::collections::HashMap,
     prelude::*,
@@ -155,32 +157,41 @@ fn tile_placement(trigger: Trigger<TilePlaced>, mut tiles: Query<&mut TileData>)
 
 /// Modify the Sprites of Entities with TileData Components that were just spawned or modified
 fn tile_sprite_updates(tiles: Query<(&TileData, &mut Sprite), Changed<TileData>>) {
-    // Right now tiles can be solid dirt, or background dirt. This means the logic for changing the
-    // sprites can be very simple, but it will get complicated quickly as new blocks are added and
-    // require referencing a resource of some kind.
+    // TODO: The color picking by ID is only going to get worse
     for tile in tiles {
         let (tile_data, mut sprite) = tile;
         if tile_data.fg_id == 0 {
             if tile_data.bg_id == 0 {
                 sprite.color = Color::from(CYAN_400);
-            } else {
+            } else if tile_data.bg_id == 1 {
                 sprite.color = Color::from(AMBER_900);
+            } else {
+                sprite.color = Color::from(STONE_700);
             }
-        } else {
+        } else if tile_data.fg_id == 1 {
             sprite.color = Color::from(AMBER_700);
+        } else if tile_data.fg_id == 2 {
+            sprite.color = Color::from(GREEN_700);
+        } else {
+            sprite.color = Color::from(STONE_500);
         }
     }
 }
 
 /// Update a tile's sprite while it's being broken
 fn tile_breaking_effect(tiles: Query<(&TileData, &BreakTimer, &mut Sprite), Changed<BreakTimer>>) {
-    // Right now the dirt tiles are the only solid (and therefore breakable) blocks, which saves
-    // this logic from being too complicated for now
+    // TODO: More bad color picking by id that will only get worse
     for tile in tiles {
         let (tile_data, break_timer, mut sprite) = tile;
 
+        let base_color = Color::from(match tile_data.fg_id {
+            1 => AMBER_700,
+            2 => GREEN_700,
+            _ => STONE_500,
+        });
+
         let breakage_frac = break_timer.0.elapsed_secs() / BREAK_TIME;
-        sprite.color = Color::from(AMBER_700).mix(&Color::from(NEUTRAL_950), breakage_frac);
+        sprite.color = base_color.mix(&Color::from(NEUTRAL_950), breakage_frac);
     }
 }
 
