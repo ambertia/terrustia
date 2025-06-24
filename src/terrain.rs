@@ -70,8 +70,8 @@ impl TileData {
 // TODO: Do I want to save the partially-broken state of multiple tiles or just one? Terraria keeps
 // that information for a short time - Maybe I should keep it for up to X tiles (e.g. 3-4?)
 /// Component to help keep track of tile(s) currently being destroyed
-#[derive(Component)]
-struct BreakingTimer(Stopwatch);
+#[derive(Component, Default)]
+struct BreakTimer(Stopwatch);
 
 #[derive(Event)]
 struct TileDestroyed;
@@ -109,9 +109,35 @@ fn tile_interaction(
     }
 }
 
-/// Modify tiles according to what happens in the world
-fn tile_destruction(trigger: Trigger<TileDestroyed>, mut tiles: Query<&mut TileData>) {
-    let mut tile = tiles.get_mut(trigger.target()).unwrap();
+const BREAK_TIME: f32 = 0.6;
+/// Modify tiles according to what happens in the world. Player must hold the left mouse button
+/// down over a period of time before the tile will actually break.
+fn tile_destruction(
+    trigger: Trigger<TileDestroyed>,
+    mut tiles: Query<(&mut TileData, Option<&mut BreakTimer>)>,
+    mut commands: Commands,
+    time_fixed: Res<Time<Fixed>>,
+) {
+    let (mut tile, break_timer) = tiles.get_mut(trigger.target()).unwrap();
+
+    // Add a new timer to this tile if it's not already in the process of being broken
+    // tile_interaction runs on FixedUpdate so use Time<Fixed> to advance stopwatches.
+    // This observer will run at some arbitrary time after FixedUpdate, so use the
+    // timestep() to advance rather than delta()
+    let Some(mut break_timer) = break_timer else {
+        let mut new_timer = BreakTimer::default();
+        new_timer.0.tick(time_fixed.timestep());
+        commands.entity(trigger.target()).insert(new_timer);
+        return;
+    };
+
+    // Tick this tile's timer, but if it isn't ready yet don't destroy it
+    break_timer.0.tick(time_fixed.timestep());
+    if break_timer.0.elapsed_secs() < BREAK_TIME {
+        return;
+    }
+
+    commands.entity(trigger.target()).remove::<BreakTimer>();
     tile.fg_id = 0;
     tile.solid = false;
 }
