@@ -1,5 +1,5 @@
 use bevy::{
-    color::palettes::css::{BLACK, CHOCOLATE, DEEP_SKY_BLUE, SADDLE_BROWN},
+    color::palettes::tailwind::{AMBER_700, AMBER_900, CYAN_400, NEUTRAL_950},
     math::{I16Vec2, bounding::Aabb2d},
     platform::collections::HashMap,
     prelude::*,
@@ -162,12 +162,12 @@ fn tile_sprite_updates(tiles: Query<(&TileData, &mut Sprite), Changed<TileData>>
         let (tile_data, mut sprite) = tile;
         if tile_data.fg_id == 0 {
             if tile_data.bg_id == 0 {
-                sprite.color = Color::from(DEEP_SKY_BLUE);
+                sprite.color = Color::from(CYAN_400);
             } else {
-                sprite.color = Color::from(SADDLE_BROWN);
+                sprite.color = Color::from(AMBER_900);
             }
         } else {
-            sprite.color = Color::from(CHOCOLATE);
+            sprite.color = Color::from(AMBER_700);
         }
     }
 }
@@ -180,7 +180,7 @@ fn tile_breaking_effect(tiles: Query<(&TileData, &BreakTimer, &mut Sprite), Chan
         let (tile_data, break_timer, mut sprite) = tile;
 
         let breakage_frac = break_timer.0.elapsed_secs() / BREAK_TIME;
-        sprite.color = Color::from(CHOCOLATE).mix(&Color::from(BLACK), breakage_frac);
+        sprite.color = Color::from(AMBER_700).mix(&Color::from(NEUTRAL_950), breakage_frac);
     }
 }
 
