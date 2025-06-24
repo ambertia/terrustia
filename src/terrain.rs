@@ -13,7 +13,7 @@ impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<GameMap>()
             .add_event::<TileDestroyed>()
-            .add_observer(tile_modification)
+            .add_observer(tile_destruction)
             .add_systems(Startup, build_terrain)
             .add_systems(FixedUpdate, tile_interaction)
             .add_systems(Update, tile_sprite_updates);
@@ -93,7 +93,7 @@ fn tile_interaction(
 }
 
 /// Modify tiles according to what happens in the world
-fn tile_modification(trigger: Trigger<TileDestroyed>, mut tiles: Query<&mut TileData>) {
+fn tile_destruction(trigger: Trigger<TileDestroyed>, mut tiles: Query<&mut TileData>) {
     let mut tile = tiles.get_mut(trigger.target()).unwrap();
     tile.fg_id = 0;
     tile.solid = false;
