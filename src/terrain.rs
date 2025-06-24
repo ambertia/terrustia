@@ -1,5 +1,5 @@
 use bevy::{
-    color::palettes::css::{CHOCOLATE, SADDLE_BROWN},
+    color::palettes::css::{CHOCOLATE, DEEP_SKY_BLUE, SADDLE_BROWN, SKY_BLUE},
     math::{I16Vec2, bounding::Aabb2d},
     platform::collections::HashMap,
     prelude::*,
@@ -106,10 +106,14 @@ fn tile_sprite_updates(tiles: Query<(&TileData, &mut Sprite), Changed<TileData>>
     // require referencing a resource of some kind.
     for tile in tiles {
         let (tile_data, mut sprite) = tile;
-        if tile_data.solid {
-            sprite.color = Color::from(CHOCOLATE);
+        if tile_data.fg_id == 0 {
+            if tile_data.bg_id == 0 {
+                sprite.color = Color::from(DEEP_SKY_BLUE);
+            } else {
+                sprite.color = Color::from(SADDLE_BROWN);
+            }
         } else {
-            sprite.color = Color::from(SADDLE_BROWN);
+            sprite.color = Color::from(CHOCOLATE);
         }
     }
 }
