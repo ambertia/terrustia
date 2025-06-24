@@ -14,6 +14,7 @@ impl Plugin for TerrainPlugin {
         app.init_resource::<GameMap>()
             .add_event::<TileDestroyed>()
             .add_observer(tile_destruction)
+            .add_observer(tile_placement)
             .add_systems(Startup, build_terrain)
             .add_systems(FixedUpdate, tile_interaction)
             .add_systems(Update, tile_sprite_updates);
@@ -106,6 +107,12 @@ fn tile_destruction(trigger: Trigger<TileDestroyed>, mut tiles: Query<&mut TileD
     let mut tile = tiles.get_mut(trigger.target()).unwrap();
     tile.fg_id = 0;
     tile.solid = false;
+}
+
+fn tile_placement(trigger: Trigger<TilePlaced>, mut tiles: Query<&mut TileData>) {
+    let mut tile = tiles.get_mut(trigger.target()).unwrap();
+    tile.fg_id = 1;
+    tile.solid = true;
 }
 
 /// Modify the Sprites of Entities with TileData Components that were just spawned or modified
