@@ -1,4 +1,4 @@
-use bevy::{color::palettes::css::WHITE, prelude::*};
+use bevy::{color::palettes::css::WHITE, input::mouse::AccumulatedMouseScroll, prelude::*};
 use physics::{MovementState, PhysicsPlugin};
 use terrain::TerrainPlugin;
 
@@ -14,7 +14,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .insert_resource(ClearColor(Color::BLACK))
         .add_systems(Startup, setup)
-        .add_systems(Update, track_camera_to_player)
+        .add_systems(Update, (track_camera_to_player, zoom_camera))
         .add_plugins(PhysicsPlugin)
         .add_plugins(TerrainPlugin)
         .run();
@@ -58,4 +58,26 @@ fn track_camera_to_player(
     camera.translation = camera
         .translation
         .lerp(target, time.delta_secs() / CATCH_UP_TIME);
+}
+
+const ZOOM_SPEED: f32 = 1.;
+const ZOOM_MIN: f32 = 0.5;
+const ZOOM_MAX: f32 = 2.;
+fn zoom_camera(
+    mut projection: Single<&mut Projection, With<Camera>>,
+    scroll_input: Res<AccumulatedMouseScroll>,
+) {
+    match projection.into_inner().into_inner() {
+        Projection::Orthographic(ortho_projection) => {
+            // Zoom in when scrolling up
+            let zoom_delta = -scroll_input.delta.y * ZOOM_SPEED;
+
+            // Logarithmic (multiplicative) zoom scaling
+            let zoom_scale = 1. + zoom_delta;
+
+            ortho_projection.scale =
+                (ortho_projection.scale * zoom_scale).clamp(ZOOM_MIN, ZOOM_MAX);
+        }
+        _ => {}
+    }
 }
