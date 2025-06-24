@@ -3,6 +3,7 @@ use bevy::{
     math::{I16Vec2, bounding::Aabb2d},
     platform::collections::HashMap,
     prelude::*,
+    time::Stopwatch,
     window::PrimaryWindow,
 };
 use round_to::{CeilTo, FloorTo};
@@ -65,6 +66,12 @@ impl TileData {
         self.solid
     }
 }
+
+// TODO: Do I want to save the partially-broken state of multiple tiles or just one? Terraria keeps
+// that information for a short time - Maybe I should keep it for up to X tiles (e.g. 3-4?)
+/// Component to help keep track of tile(s) currently being destroyed
+#[derive(Component)]
+struct BreakingTimer(Stopwatch);
 
 #[derive(Event)]
 struct TileDestroyed;
