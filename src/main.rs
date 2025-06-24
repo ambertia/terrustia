@@ -14,7 +14,10 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .insert_resource(ClearColor(Color::BLACK))
         .add_systems(Startup, setup)
-        .add_systems(Update, (track_camera_to_player, zoom_camera))
+        .add_systems(
+            Update,
+            (track_camera_to_player, zoom_camera, update_coordinates_ui),
+        )
         .add_plugins(PhysicsPlugin)
         .add_plugins(TerrainPlugin)
         .run();
@@ -23,6 +26,10 @@ fn main() {
 #[derive(Component)]
 #[require(Camera2d)]
 struct MainCamera;
+
+#[derive(Component)]
+#[require(Text)]
+struct UiCoordinateText;
 
 #[derive(Component)]
 #[require(Transform, MovementState)]
@@ -46,6 +53,8 @@ fn setup(mut commands: Commands) {
             ..default()
         },
     ));
+
+    commands.spawn(UiCoordinateText);
 }
 
 const CATCH_UP_TIME: f32 = 0.33;
@@ -84,4 +93,15 @@ fn zoom_camera(
         }
         _ => {}
     }
+}
+
+fn update_coordinates_ui(
+    mut text: Single<&mut Text, With<UiCoordinateText>>,
+    player: Single<&Transform, With<Player>>,
+) {
+    text.0 = format!(
+        "({0:.1}, {1:.1})",
+        player.translation.x / BLOCK_SIZE,
+        (player.translation.y - PLAYER_HEIGHT / 2.) / BLOCK_SIZE
+    );
 }
