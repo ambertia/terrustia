@@ -68,6 +68,9 @@ impl TileData {
 #[derive(Event)]
 struct TileDestroyed;
 
+#[derive(Event)]
+struct TilePlaced;
+
 /// Detect and trigger events on tiles by mouse input
 fn tile_interaction(
     mut commands: Commands,
@@ -76,8 +79,8 @@ fn tile_interaction(
     window: Single<&Window, With<PrimaryWindow>>,
     game_map: Res<GameMap>,
 ) {
-    // Only try to break blocks if the left mouse button is pressed
-    if !mouse.pressed(MouseButton::Left) {
+    // Tile interaction can only occur when one of the mouse buttons is pressed
+    if !mouse.any_pressed([MouseButton::Left, MouseButton::Right]) {
         return;
     }
 
@@ -85,10 +88,16 @@ fn tile_interaction(
     let cursor_pos = window.cursor_position().unwrap();
     let world_pos = camera.0.viewport_to_world_2d(camera.1, cursor_pos).unwrap();
 
-    // Trigger TileDestroyed observers on the tile occupying those coordinates
+    // Trigger Tile observers on the tile occupying those coordinates
     if let Some(t) = game_map.tile_under(&world_pos) {
-        // Entities implement Clone since they wrap an identifier for the ECS (like a key)
-        commands.trigger_targets(TileDestroyed, t);
+        for button in mouse.get_pressed() {
+            match button {
+                // Entities implement Clone since they wrap an identifier for the ECS (like a key)
+                MouseButton::Left => commands.trigger_targets(TileDestroyed, t),
+                MouseButton::Right => commands.trigger_targets(TilePlaced, t),
+                _ => continue,
+            }
+        }
     }
 }
 
