@@ -1,5 +1,5 @@
 use bevy::{
-    color::palettes::css::{CHOCOLATE, DEEP_SKY_BLUE, SADDLE_BROWN},
+    color::palettes::css::{BLACK, CHOCOLATE, DEEP_SKY_BLUE, SADDLE_BROWN},
     math::{I16Vec2, bounding::Aabb2d},
     platform::collections::HashMap,
     prelude::*,
@@ -18,7 +18,7 @@ impl Plugin for TerrainPlugin {
             .add_observer(tile_placement)
             .add_systems(Startup, build_terrain)
             .add_systems(FixedUpdate, tile_interaction)
-            .add_systems(Update, tile_sprite_updates);
+            .add_systems(Update, (tile_sprite_updates, tile_breaking_effect));
     }
 }
 
@@ -172,7 +172,17 @@ fn tile_sprite_updates(tiles: Query<(&TileData, &mut Sprite), Changed<TileData>>
     }
 }
 
-fn tile_breaking_effect(tiles: Query<(&TileData, &BreakTimer, &mut Sprite), Changed<BreakTimer>>) {}
+/// Update a tile's sprite while it's being broken
+fn tile_breaking_effect(tiles: Query<(&TileData, &BreakTimer, &mut Sprite), Changed<BreakTimer>>) {
+    // Right now the dirt tiles are the only solid (and therefore breakable) blocks, which saves
+    // this logic from being too complicated for now
+    for tile in tiles {
+        let (tile_data, break_timer, mut sprite) = tile;
+
+        let breakage_frac = break_timer.0.elapsed_secs() / BREAK_TIME;
+        sprite.color = Color::from(CHOCOLATE).mix(&Color::from(BLACK), breakage_frac);
+    }
+}
 
 const BLOCKS_X: i16 = 80;
 const BLOCKS_Y: i16 = 80;
