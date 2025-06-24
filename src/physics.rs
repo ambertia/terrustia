@@ -27,7 +27,7 @@ impl Plugin for PhysicsPlugin {
 }
 
 // Struct to contain physics data for moving entities
-#[derive(Component, Default)]
+#[derive(Component)]
 pub struct PhysicsBody {
     position: Vec2,
     velocity: Vec2,
@@ -38,6 +38,15 @@ impl PhysicsBody {
     pub fn from_pos(x: f32, y: f32) -> PhysicsBody {
         PhysicsBody {
             position: Vec2::new(x, y),
+            ..default()
+        }
+    }
+}
+
+impl Default for PhysicsBody {
+    fn default() -> PhysicsBody {
+        PhysicsBody {
+            mass: 1.,
             ..default()
         }
     }
