@@ -4,8 +4,8 @@ use bevy::math::bounding::{Aabb2d, BoundingVolume, IntersectsVolume};
 use bevy::prelude::*;
 use round_to::{CeilTo, FloorTo};
 
-use crate::Player;
 use crate::terrain::{GameMap, TileData, get_region_tiles, occupied_tile_range};
+use crate::{BLOCK_SIZE, Player};
 
 pub struct PhysicsPlugin;
 
@@ -16,8 +16,8 @@ impl Plugin for PhysicsPlugin {
             (
                 accel_env,
                 accel_input,
+                check_collisions_impulse,
                 velocity_cap,
-                check_collisions,
                 position_update,
             )
                 .chain(),
@@ -40,6 +40,10 @@ impl PhysicsBody {
             position: Vec2::new(x, y),
             ..default()
         }
+    }
+    fn apply_impulse(&mut self, impulse: Vec2) {
+        let net_velocity = impulse / self.mass;
+        self.velocity += net_velocity;
     }
 }
 
@@ -228,6 +232,91 @@ fn get_collision(source: Aabb2d, target: Aabb2d) -> Option<Collision> {
     };
 
     Some(side)
+}
+
+const IMPULSE_PER_OVERLAP: f32 = 0.1;
+// Cap the impulse from overlap to two full block's worth
+const COLLISION_IMPULSE_CAP: f32 = IMPULSE_PER_OVERLAP * BLOCK_SIZE * BLOCK_SIZE * 2.;
+const CCD_THRESHOLD: f32 = 0.8;
+fn check_collisions_impulse(
+    movers: Query<(&mut PhysicsBody, &Transform)>,
+    tiles: Query<(&TileData, &Transform)>,
+    game_map: Res<GameMap>,
+) {
+    for mover in movers {
+        let (mut physics_body, transform) = mover;
+
+        // Make an Aabb2d for the mover so we don't have to do it in the loop below
+        let mover_box = Aabb2d::new(physics_body.position, transform.scale.truncate() / 2.);
+
+        // The range of tile coordinates the mover occupies depends on its position and size
+        let (bottom_left, top_right) =
+            occupied_tile_range(physics_body.position, transform.scale.truncate());
+
+        // Get a Vec<Entity> for all extant nearby tiles
+        let tile_entities = get_region_tiles(bottom_left, top_right, &game_map);
+
+        // Mutables to track the total effect of terrain collisions on the mover
+        let mut net_impulse: Vec2 = Vec2::ZERO;
+        let mut net_overlap: f32 = 0.;
+
+        // Iterate over all the nearby tiles
+        for tile in tile_entities {
+            // Get the tile's Query data
+            let Ok((tile_data, tile_transform)) = tiles.get(tile) else {
+                continue;
+            };
+
+            // Don't collide if the tile isn't solid
+            if !tile_data.is_solid() {
+                continue;
+            };
+
+            // Make an Aabb2d for the tile
+            let tile_box = Aabb2d::new(
+                tile_transform.translation.truncate(),
+                tile_transform.scale.truncate() / 2.,
+            );
+
+            // Get the overlap area and direction from the mover's center to the tile's center
+            let force_direction = (mover_box.center() - tile_box.center()).normalize();
+            let overlap = get_overlap(mover_box, tile_box);
+
+            // Update the total variables
+            net_overlap += overlap;
+            net_impulse += force_direction * overlap * IMPULSE_PER_OVERLAP;
+        }
+
+        // The net effect of all nearby tiles can now be applied to the mover
+        physics_body.apply_impulse(net_impulse.clamp_length_max(COLLISION_IMPULSE_CAP));
+
+        // Compare how much of the mover is actually overlapping with tiles. If above a certain
+        // threshold, write an Event to trigger a primitive continuous-collision-detection
+        // TODO: Implement CCD
+        if net_overlap > mover_box.visible_area() * CCD_THRESHOLD {}
+    }
+}
+
+// WARN: This can probably overflow f32's depending on what exactly the coordinates are, but with a
+// map only going up to i16's it should be fine
+/// Measure the overlap in world-space coordinates between two bounding boxes
+fn get_overlap(source: Aabb2d, target: Aabb2d) -> f32 {
+    // Special case
+    if !source.intersects(&target) {
+        return 0.;
+    }
+
+    // Two corners for each bounding box
+    let source_bl = source.center() - source.half_size();
+    let source_tr = source.center() + source.half_size();
+    let target_bl = target.center() - target.half_size();
+    let target_tr = target.center() + target.half_size();
+
+    // Compute the corners of the overlap rectangle
+    let overlap_bl = Vec2::new(source_bl.x.max(target_bl.x), source_bl.y.max(target_bl.y));
+    let overlap_tr = Vec2::new(source_tr.x.min(target_tr.x), source_tr.x.min(target_tr.y));
+    let side_lengths = overlap_tr - overlap_bl;
+    side_lengths.x * side_lengths.y
 }
 
 /// Return map coordinate ranges for all tiles at least partially occupied by the moving object.
