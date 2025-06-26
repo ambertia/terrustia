@@ -46,8 +46,9 @@ impl PhysicsBody {
 impl Default for PhysicsBody {
     fn default() -> PhysicsBody {
         PhysicsBody {
+            position: Vec2::ZERO,
+            velocity: Vec2::ZERO,
             mass: 1.,
-            ..default()
         }
     }
 }
