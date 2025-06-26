@@ -1,3 +1,4 @@
+use avian2d::prelude::{Collider, RigidBody};
 use bevy::{
     color::palettes::tailwind::{
         AMBER_700, AMBER_900, CYAN_400, GREEN_700, NEUTRAL_950, STONE_500, STONE_700,
@@ -39,7 +40,7 @@ impl GameMap {
 }
 
 /// Contain the stateful data within a tile
-#[derive(Component)]
+#[derive(Component, Clone, Copy)]
 pub struct TileData {
     fg_id: usize, // Foreground tile id
     bg_id: usize, // Background tile id
@@ -116,11 +117,11 @@ const BREAK_TIME: f32 = 0.6;
 /// down over a period of time before the tile will actually break.
 fn tile_destruction(
     trigger: Trigger<TileDestroyed>,
-    mut tiles: Query<(&mut TileData, Option<&mut BreakTimer>)>,
+    mut tiles: Query<(&mut TileData, Option<&mut BreakTimer>, Option<&Collider>)>,
     mut commands: Commands,
     time_fixed: Res<Time<Fixed>>,
 ) {
-    let (mut tile, break_timer) = tiles.get_mut(trigger.target()).unwrap();
+    let (mut tile, break_timer, collider) = tiles.get_mut(trigger.target()).unwrap();
 
     // Tiles that aren't solid can't be broken
     if !tile.solid {
@@ -144,15 +145,25 @@ fn tile_destruction(
         return;
     }
 
+    // Modify the TileData and remove the BreakTimer component
     commands.entity(trigger.target()).remove::<BreakTimer>();
     tile.fg_id = 0;
     tile.solid = false;
+    // Remove the tile's collider if present
+    commands.entity(trigger.target()).remove::<Collider>();
 }
 
-fn tile_placement(trigger: Trigger<TilePlaced>, mut tiles: Query<&mut TileData>) {
+fn tile_placement(
+    trigger: Trigger<TilePlaced>,
+    mut tiles: Query<&mut TileData>,
+    mut commands: Commands,
+) {
     let mut tile = tiles.get_mut(trigger.target()).unwrap();
     tile.fg_id = 1;
     tile.solid = true;
+    commands
+        .entity(trigger.target())
+        .insert(Collider::rectangle(BLOCK_SIZE, BLOCK_SIZE));
 }
 
 /// Modify the Sprites of Entities with TileData Components that were just spawned or modified
@@ -227,6 +238,7 @@ fn build_terrain(mut game_map: ResMut<GameMap>, mut commands: Commands) {
             let tile_entity = commands
                 .spawn((
                     tile_data,
+                    RigidBody::Static,
                     Sprite::default(),
                     Transform {
                         translation: Vec3::new(
@@ -239,6 +251,13 @@ fn build_terrain(mut game_map: ResMut<GameMap>, mut commands: Commands) {
                     },
                 ))
                 .id();
+
+            // Add a collider if the tile is solid
+            if tile_data.solid {
+                commands
+                    .entity(tile_entity)
+                    .insert(Collider::rectangle(BLOCK_SIZE, BLOCK_SIZE));
+            }
 
             // Add the tile to the map resource
             game_map.0.insert((i, j), tile_entity);

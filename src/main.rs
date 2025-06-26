@@ -1,5 +1,8 @@
+use avian2d::{
+    PhysicsPlugins,
+    prelude::{Collider, Gravity, LinearVelocity, RigidBody},
+};
 use bevy::{color::palettes::css::WHITE, input::mouse::AccumulatedMouseScroll, prelude::*};
-use physics::{PhysicsBody, PhysicsPlugin};
 use terrain::TerrainPlugin;
 
 mod physics;
@@ -18,7 +21,8 @@ fn main() {
             Update,
             (track_camera_to_player, zoom_camera, update_coordinates_ui),
         )
-        .add_plugins(PhysicsPlugin)
+        .add_plugins(PhysicsPlugins::default())
+        .insert_resource(Gravity(Vec2::NEG_Y * 50.))
         .add_plugins(TerrainPlugin)
         .run();
 }
@@ -32,7 +36,7 @@ struct MainCamera;
 struct UiCoordinateText;
 
 #[derive(Component)]
-#[require(Transform, PhysicsBody)]
+#[require(Transform, Sprite, RigidBody, Collider)]
 struct Player;
 
 // Initialize all the stuff in the world
@@ -42,7 +46,9 @@ fn setup(mut commands: Commands) {
     // Spawn the player
     commands.spawn((
         Player,
-        PhysicsBody::from_pos(0.0, 50.0),
+        RigidBody::Dynamic,
+        Collider::rectangle(PLAYER_WIDTH, PLAYER_HEIGHT),
+        LinearVelocity::default(),
         Sprite {
             color: Color::from(WHITE),
             ..default()

@@ -18,6 +18,7 @@ impl Plugin for PhysicsPlugin {
                 accel_input,
                 check_collisions_impulse,
                 velocity_cap,
+                converge_velocities,
                 position_update,
             )
                 .chain(),
@@ -58,13 +59,14 @@ impl Default for PhysicsBody {
 }
 
 const DRAG_FACTOR: f32 = 0.05;
-const GRAVITY: f32 = -15.;
+const GRAVITY: f32 = 30.;
 /// Accelerate entities based on drag and gravity
 fn accel_env(movers: Query<&mut PhysicsBody>, time_fixed: Res<Time<Fixed>>) {
     for mut mover in movers {
         let drag_impulse = mover.velocity * DRAG_FACTOR * time_fixed.delta_secs();
-        let grav_impulse = GRAVITY * time_fixed.delta_secs();
-        mover.velocity += drag_impulse + vec2(0., grav_impulse);
+
+        let gravity_impulse = GRAVITY * time_fixed.delta_secs() * mover.mass;
+        mover.apply_impulse(Vec2::new(0., -1.) * gravity_impulse);
     }
 }
 
@@ -167,6 +169,14 @@ fn check_collisions_impulse(
         // The net effect of all nearby tiles can now be applied to the mover
         physics_body.apply_impulse(net_impulse.clamp_length_max(COLLISION_IMPULSE_CAP));
 
+        // Whatever other effects were applied, the velocity should be dampened if touching blocks.
+        // Damping depends on how much area is actually overlapping.
+        if net_overlap > 50. {
+            physics_body.velocity *= 0.5;
+        } else if net_overlap > 10. {
+            physics_body.velocity *= 0.8 - 0.0075 * (net_overlap - 10.);
+        }
+
         // Compare how much of the mover is actually overlapping with tiles. If above a certain
         // threshold, write an Event to trigger a primitive continuous-collision-detection
         // TODO: Implement CCD
@@ -194,6 +204,25 @@ fn get_overlap(source: Aabb2d, target: Aabb2d) -> f32 {
     let overlap_tr = Vec2::new(source_tr.x.min(target_tr.x), source_tr.x.min(target_tr.y));
     let side_lengths = overlap_tr - overlap_bl;
     side_lengths.x * side_lengths.y
+}
+
+const VEL_DAMPING_START: f32 = 5.;
+const VEL_DAMPING_MIN: f32 = 0.8;
+const VEL_DAMPING_MAX: f32 = 0.4;
+// Help converge small velocities
+fn converge_velocities(movers: Query<&mut PhysicsBody>) {
+    for mut mover in movers {
+        let speed = mover.velocity.length();
+
+        if speed > VEL_DAMPING_START {
+            continue;
+        }
+
+        let damping_factor =
+            (speed / VEL_DAMPING_START) * (VEL_DAMPING_MIN - VEL_DAMPING_MAX) + VEL_DAMPING_MAX;
+
+        mover.velocity *= damping_factor;
+    }
 }
 
 /// Move entities in world space
