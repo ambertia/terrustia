@@ -3,7 +3,7 @@ use bevy::{
     color::palettes::tailwind::{
         AMBER_700, AMBER_900, CYAN_400, GREEN_700, NEUTRAL_950, STONE_500, STONE_700,
     },
-    math::{I16Vec2, bounding::Aabb2d},
+    math::I16Vec2,
     platform::collections::HashMap,
     prelude::*,
     time::Stopwatch,
@@ -58,13 +58,6 @@ impl Default for TileData {
 }
 
 impl TileData {
-    fn destroy(&mut self) -> usize {
-        let old_tile_id = self.fg_id;
-        self.fg_id = 0;
-        self.solid = false;
-        old_tile_id
-    }
-
     pub fn is_solid(&self) -> bool {
         self.solid
     }
@@ -117,11 +110,11 @@ const BREAK_TIME: f32 = 0.6;
 /// down over a period of time before the tile will actually break.
 fn tile_destruction(
     trigger: Trigger<TileDestroyed>,
-    mut tiles: Query<(&mut TileData, Option<&mut BreakTimer>, Option<&Collider>)>,
+    mut tiles: Query<(&mut TileData, Option<&mut BreakTimer>)>,
     mut commands: Commands,
     time_fixed: Res<Time<Fixed>>,
 ) {
-    let (mut tile, break_timer, collider) = tiles.get_mut(trigger.target()).unwrap();
+    let (mut tile, break_timer) = tiles.get_mut(trigger.target()).unwrap();
 
     // Tiles that aren't solid can't be broken
     if !tile.solid {
@@ -253,11 +246,11 @@ fn build_terrain(mut game_map: ResMut<GameMap>, mut commands: Commands) {
                 .id();
 
             // Add a collider if the tile is solid
-            if tile_data.solid {
+            /* if tile_data.solid {
                 commands
                     .entity(tile_entity)
                     .insert(Collider::rectangle(BLOCK_SIZE, BLOCK_SIZE));
-            }
+            } */
 
             // Add the tile to the map resource
             game_map.0.insert((i, j), tile_entity);
@@ -299,17 +292,6 @@ pub fn occupied_tile_range(center: Vec2, size: Vec2) -> (I16Vec2, I16Vec2) {
     let top_right = I16Vec2::new(right.ceil_to(), top.ceil_to());
 
     (bottom_left, top_right)
-}
-
-/// Return a bounding box in world space based on map coordinates
-pub fn tile_coord_to_aabb2d(x: i16, y: i16) -> Aabb2d {
-    Aabb2d::new(
-        Vec2::new(
-            f32::from(x) * BLOCK_SIZE + BLOCK_SIZE / 2.,
-            f32::from(y) * BLOCK_SIZE + BLOCK_SIZE / 2.,
-        ),
-        Vec2::new(BLOCK_SIZE / 2., BLOCK_SIZE / 2.),
-    )
 }
 
 pub fn world_to_map_coord(world_space: &Vec2) -> (i16, i16) {
