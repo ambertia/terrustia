@@ -156,9 +156,9 @@ fn tile_placement(
     let mut tile = tiles.get_mut(trigger.target()).unwrap();
     tile.fg_id = 1;
     tile.solid = true;
-    //commands
-    //    .entity(trigger.target())
-    //    .insert(Collider::rectangle(BLOCK_SIZE, BLOCK_SIZE));
+    commands
+        .entity(trigger.target())
+        .insert(Collider::rectangle(BLOCK_SIZE, BLOCK_SIZE));
 }
 
 /// Modify the Sprites of Entities with TileData Components that were just spawned or modified
