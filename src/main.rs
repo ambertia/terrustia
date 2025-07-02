@@ -43,7 +43,7 @@ fn setup(mut commands: Commands) {
     commands.spawn((
         Player,
         RigidBody::Dynamic,
-        Collider::rectangle(PLAYER_WIDTH, PLAYER_HEIGHT),
+        Collider::rectangle(PLAYER_WIDTH - 0.1, PLAYER_HEIGHT - 0.1),
         Sprite {
             color: Color::from(WHITE),
             custom_size: Some(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT)),
@@ -59,6 +59,7 @@ fn setup(mut commands: Commands) {
         )
         .with_max_distance(0.1),
         LockedAxes::ROTATION_LOCKED,
+        CollisionMargin(0.05),
     ));
 
     commands.spawn(UiCoordinateText);
