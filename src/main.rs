@@ -48,7 +48,6 @@ fn setup(mut commands: Commands) {
         Player,
         RigidBody::Dynamic,
         Collider::rectangle(PLAYER_WIDTH, PLAYER_HEIGHT),
-        LinearVelocity::default(),
         Sprite {
             color: Color::from(WHITE),
             ..default()
