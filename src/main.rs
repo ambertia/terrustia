@@ -1,7 +1,4 @@
-use avian2d::{
-    PhysicsPlugins,
-    math::Vector,
-    prelude::{Collider, Gravity, LockedAxes, RigidBody, ShapeCaster},
+use avian2d::{PhysicsPlugins, math::Vector, prelude::*};
 };
 use bevy::{color::palettes::css::WHITE, input::mouse::AccumulatedMouseScroll, prelude::*};
 use player::{CharacterControllerPlugin, Player};
