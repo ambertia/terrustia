@@ -5,7 +5,7 @@ pub struct CharacterControllerPlugin;
 
 impl Plugin for CharacterControllerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, keyboard_input);
+        app.add_systems(Update, (update_grounded, keyboard_input).chain());
     }
 }
 
@@ -40,9 +40,9 @@ fn update_grounded(player: Single<(Entity, &ShapeHits), With<Player>>, mut comma
     }
 }
 
-const HORIZONTAL_VELOCITY_MAX: f32 = 300.;
-const HORIZONTAL_ACCELERATION: f32 = 50.;
-const JUMP_VEL: f32 = 200.;
+const HORIZONTAL_VELOCITY_MAX: f32 = 20.;
+const HORIZONTAL_ACCELERATION: f32 = 10.;
+const JUMP_VEL: f32 = 20.;
 /// Check for input every frame
 fn keyboard_input(
     keyboard: Res<ButtonInput<KeyCode>>,
@@ -60,7 +60,7 @@ fn keyboard_input(
     // If W / Space is pressed and the player is grounded, set their velocity to a fixed value
     if let Some(_) = player_grounded {
         if keyboard.any_pressed([KeyCode::KeyW, KeyCode::Space]) {
-            player_vel.x = JUMP_VEL;
+            player_vel.y = JUMP_VEL;
         }
     }
 }
