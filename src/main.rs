@@ -50,13 +50,10 @@ fn setup(mut commands: Commands) {
         Collider::rectangle(PLAYER_WIDTH, PLAYER_HEIGHT),
         Sprite {
             color: Color::from(WHITE),
+            custom_size: Some(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT)),
             ..default()
         },
-        Transform {
-            translation: Vec3::new(0., 10., 1.),
-            scale: Vec3::new(PLAYER_WIDTH, PLAYER_HEIGHT, 1.),
-            ..default()
-        },
+        Transform::from_xyz(0., 30., 1.),
         // A ShapeCaster to help detect if the player is touching the ground.
         ShapeCaster::new(
             Collider::rectangle(PLAYER_WIDTH * 0.99, PLAYER_HEIGHT * 0.99),
