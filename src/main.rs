@@ -59,7 +59,9 @@ fn setup(mut commands: Commands) {
         )
         .with_max_distance(0.1),
         LockedAxes::ROTATION_LOCKED,
+        Friction::new(0.1).with_combine_rule(CoefficientCombine::Min),
         CollisionMargin(0.05),
+        LinearDamping(0.1),
     ));
 
     commands.spawn(UiCoordinateText);
