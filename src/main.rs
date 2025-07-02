@@ -10,7 +10,7 @@ mod terrain;
 
 const PLAYER_HEIGHT: f32 = BLOCK_SIZE * 3.0;
 const PLAYER_WIDTH: f32 = BLOCK_SIZE * 2.0;
-const BLOCK_SIZE: f32 = 10.0;
+const BLOCK_SIZE: f32 = 1.0;
 
 fn main() {
     App::new()
@@ -54,7 +54,7 @@ fn setup(mut commands: Commands) {
             ..default()
         },
         Transform {
-            translation: Vec3::new(0., 50., 1.),
+            translation: Vec3::new(0., 10., 1.),
             scale: Vec3::new(PLAYER_WIDTH, PLAYER_HEIGHT, 1.),
             ..default()
         },

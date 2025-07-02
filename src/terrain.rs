@@ -11,6 +11,8 @@ use bevy::{
 };
 use round_to::{CeilTo, FloorTo};
 
+use crate::BLOCK_SIZE;
+
 pub struct TerrainPlugin;
 
 impl Plugin for TerrainPlugin {
@@ -201,7 +203,6 @@ fn tile_breaking_effect(tiles: Query<(&TileData, &BreakTimer, &mut Sprite), Chan
 
 const BLOCKS_X: i16 = 80;
 const BLOCKS_Y: i16 = 80;
-const BLOCK_SIZE: f32 = 10.;
 /// Run on application setup to build the map data structure and spawn tile entities
 fn build_terrain(mut game_map: ResMut<GameMap>, mut commands: Commands) {
     // Blocks are spawned from bottom-left to top-right. BLOCKS_X determines leftmost coordinate.
