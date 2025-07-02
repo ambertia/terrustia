@@ -1,11 +1,14 @@
 use avian2d::{
     PhysicsPlugins,
-    prelude::{Collider, Gravity, LinearVelocity, RigidBody},
+    math::Vector,
+    prelude::{Collider, Gravity, LockedAxes, RigidBody, ShapeCaster},
 };
 use bevy::{color::palettes::css::WHITE, input::mouse::AccumulatedMouseScroll, prelude::*};
+use player::{CharacterControllerPlugin, Player};
 use terrain::TerrainPlugin;
 
 mod physics;
+mod player;
 mod terrain;
 
 const PLAYER_HEIGHT: f32 = BLOCK_SIZE * 3.0;
@@ -24,6 +27,7 @@ fn main() {
         .add_plugins(PhysicsPlugins::default())
         .insert_resource(Gravity(Vec2::NEG_Y * 50.))
         .add_plugins(TerrainPlugin)
+        .add_plugins(CharacterControllerPlugin)
         .run();
 }
 
@@ -34,10 +38,6 @@ struct MainCamera;
 #[derive(Component)]
 #[require(Text)]
 struct UiCoordinateText;
-
-#[derive(Component)]
-#[require(Transform, Sprite, RigidBody, Collider)]
-struct Player;
 
 // Initialize all the stuff in the world
 fn setup(mut commands: Commands) {
@@ -57,6 +57,15 @@ fn setup(mut commands: Commands) {
             scale: Vec3::new(PLAYER_WIDTH, PLAYER_HEIGHT, 1.),
             ..default()
         },
+        // A ShapeCaster to help detect if the player is touching the ground.
+        ShapeCaster::new(
+            Collider::rectangle(PLAYER_WIDTH * 0.99, PLAYER_HEIGHT * 0.99),
+            Vector::ZERO,
+            0.,
+            Dir2::NEG_Y,
+        )
+        .with_max_distance(0.1),
+        LockedAxes::ROTATION_LOCKED,
     ));
 
     commands.spawn(UiCoordinateText);
