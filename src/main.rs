@@ -85,11 +85,12 @@ const ZOOM_MAX: f32 = 2.;
 fn zoom_camera(
     projection: Single<&mut Projection, With<Camera>>,
     scroll_input: Res<AccumulatedMouseScroll>,
+    time: Res<Time>,
 ) {
     match projection.into_inner().into_inner() {
         Projection::Orthographic(ortho_projection) => {
             // Zoom in when scrolling up
-            let zoom_delta = -scroll_input.delta.y * ZOOM_SPEED;
+            let zoom_delta = -scroll_input.delta.y * ZOOM_SPEED * time.delta_secs();
 
             // Logarithmic (multiplicative) zoom scaling
             let zoom_scale = 1. + zoom_delta;
