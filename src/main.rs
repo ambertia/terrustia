@@ -3,7 +3,6 @@ use bevy::{color::palettes::css::WHITE, input::mouse::AccumulatedMouseScroll, pr
 use player::{CharacterControllerPlugin, Player};
 use terrain::TerrainPlugin;
 
-mod physics;
 mod player;
 mod terrain;
 

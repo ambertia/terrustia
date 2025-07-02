@@ -148,6 +148,7 @@ fn tile_destruction(
     commands.entity(trigger.target()).remove::<Collider>();
 }
 
+// BUG: Shouldn't be able to place over top of existing tiles
 fn tile_placement(
     trigger: Trigger<TilePlaced>,
     mut tiles: Query<&mut TileData>,
