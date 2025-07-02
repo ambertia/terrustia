@@ -156,9 +156,9 @@ fn tile_placement(
     let mut tile = tiles.get_mut(trigger.target()).unwrap();
     tile.fg_id = 1;
     tile.solid = true;
-    commands
-        .entity(trigger.target())
-        .insert(Collider::rectangle(BLOCK_SIZE, BLOCK_SIZE));
+    //commands
+    //    .entity(trigger.target())
+    //    .insert(Collider::rectangle(BLOCK_SIZE, BLOCK_SIZE));
 }
 
 /// Modify the Sprites of Entities with TileData Components that were just spawned or modified
@@ -228,6 +228,12 @@ fn build_terrain(mut game_map: ResMut<GameMap>, mut commands: Commands) {
                 },
             };
 
+            // Presence of a collider depends on block state
+            let collider = match j < 1 {
+                true => Some(Collider::rectangle(BLOCK_SIZE, BLOCK_SIZE)),
+                false => None,
+            };
+
             // Spawn tile in the world
             let tile_entity = commands
                 .spawn((
@@ -246,12 +252,10 @@ fn build_terrain(mut game_map: ResMut<GameMap>, mut commands: Commands) {
                 ))
                 .id();
 
-            // Add a collider if the tile is solid
-            /* if tile_data.solid {
-                commands
-                    .entity(tile_entity)
-                    .insert(Collider::rectangle(BLOCK_SIZE, BLOCK_SIZE));
-            } */
+            // Add the collider if the tile is solid
+            if let Some(c) = collider {
+                commands.entity(tile_entity).insert(c);
+            }
 
             // Add the tile to the map resource
             game_map.0.insert((i, j), tile_entity);
