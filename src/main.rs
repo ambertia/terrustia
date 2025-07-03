@@ -6,23 +6,24 @@ use terrain::TerrainPlugin;
 mod player;
 mod terrain;
 
-const PLAYER_HEIGHT: f32 = BLOCK_SIZE * 3.0;
-const PLAYER_WIDTH: f32 = BLOCK_SIZE * 2.0;
-const BLOCK_SIZE: f32 = 1.0;
+const PLAYER_HEIGHT: f32 = 3.0;
+const PLAYER_WIDTH: f32 = 2.0;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins((
+            DefaultPlugins,
+            PhysicsPlugins::default(),
+            TerrainPlugin,
+            CharacterControllerPlugin,
+        ))
         .insert_resource(ClearColor(Color::BLACK))
+        .insert_resource(Gravity(Vec2::NEG_Y * 50.))
         .add_systems(Startup, setup)
         .add_systems(
             Update,
             (track_camera_to_player, zoom_camera, update_coordinates_ui),
         )
-        .add_plugins(PhysicsPlugins::default())
-        .insert_resource(Gravity(Vec2::NEG_Y * 50.))
-        .add_plugins(TerrainPlugin)
-        .add_plugins(CharacterControllerPlugin)
         .run();
 }
 
@@ -36,7 +37,17 @@ struct UiCoordinateText;
 
 // Initialize all the stuff in the world
 fn setup(mut commands: Commands) {
-    commands.spawn(MainCamera);
+    commands.spawn((
+        MainCamera,
+        // Make the camera start zoomed in
+        // TODO: This is better than leaving it at 1, but 0.5 feels pretty arbitrary and having
+        // this code block just to build an OrthoProj with a different scale feels stinky
+        Projection::Orthographic({
+            let mut projection = OrthographicProjection::default_2d();
+            projection.scale = 0.1;
+            projection
+        }),
+    ));
 
     // Spawn the player
     commands.spawn((
@@ -84,7 +95,7 @@ fn track_camera_to_player(
 
 const ZOOM_SPEED: f32 = 1.0;
 const ZOOM_MIN: f32 = 0.05;
-const ZOOM_MAX: f32 = 1.;
+const ZOOM_MAX: f32 = 0.2;
 fn zoom_camera(
     projection: Single<&mut Projection, With<Camera>>,
     scroll_input: Res<AccumulatedMouseScroll>,
@@ -111,7 +122,7 @@ fn update_coordinates_ui(
 ) {
     text.0 = format!(
         "({0:.1}, {1:.1})",
-        player.translation.x / BLOCK_SIZE,
-        (player.translation.y - PLAYER_HEIGHT / 2.) / BLOCK_SIZE
+        player.translation.x,
+        player.translation.y - PLAYER_HEIGHT / 2.,
     );
 }
