@@ -6,9 +6,8 @@ use terrain::TerrainPlugin;
 mod player;
 mod terrain;
 
-const PLAYER_HEIGHT: f32 = BLOCK_SIZE * 3.0;
-const PLAYER_WIDTH: f32 = BLOCK_SIZE * 2.0;
-const BLOCK_SIZE: f32 = 1.0;
+const PLAYER_HEIGHT: f32 = 3.0;
+const PLAYER_WIDTH: f32 = 2.0;
 
 fn main() {
     App::new()
@@ -123,7 +122,7 @@ fn update_coordinates_ui(
 ) {
     text.0 = format!(
         "({0:.1}, {1:.1})",
-        player.translation.x / BLOCK_SIZE,
-        (player.translation.y - PLAYER_HEIGHT / 2.) / BLOCK_SIZE
+        player.translation.x,
+        player.translation.y - PLAYER_HEIGHT / 2.,
     );
 }

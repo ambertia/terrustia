@@ -10,8 +10,6 @@ use bevy::{
 };
 use round_to::{CeilTo, FloorTo};
 
-use crate::BLOCK_SIZE;
-
 pub struct TerrainPlugin;
 
 impl Plugin for TerrainPlugin {
@@ -154,7 +152,7 @@ fn tile_placement(
     tile.solid = true;
     commands
         .entity(trigger.target())
-        .insert(Collider::rectangle(BLOCK_SIZE, BLOCK_SIZE));
+        .insert(Collider::rectangle(1., 1.));
 }
 
 /// Modify the Sprites of Entities with TileData Components that were just spawned or modified
@@ -226,7 +224,7 @@ fn build_terrain(mut game_map: ResMut<GameMap>, mut commands: Commands) {
 
             // Presence of a collider depends on block state
             let collider = match j < 1 {
-                true => Some(Collider::rectangle(BLOCK_SIZE, BLOCK_SIZE)),
+                true => Some(Collider::rectangle(1., 1.)),
                 false => None,
             };
 
@@ -236,15 +234,7 @@ fn build_terrain(mut game_map: ResMut<GameMap>, mut commands: Commands) {
                     tile_data,
                     RigidBody::Static,
                     Sprite::default(),
-                    Transform {
-                        translation: Vec3::new(
-                            (f32::from(i) + 0.5) * BLOCK_SIZE,
-                            (f32::from(j) - 0.5) * BLOCK_SIZE,
-                            -1.,
-                        ),
-                        scale: Vec3::new(BLOCK_SIZE, BLOCK_SIZE, 1.),
-                        ..default()
-                    },
+                    Transform::from_xyz(f32::from(i) + 0.5, f32::from(j) - 0.5, -1.),
                 ))
                 .id();
 
