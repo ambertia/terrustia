@@ -96,7 +96,7 @@ fn track_camera_to_player(
 
 const ZOOM_SPEED: f32 = 1.0;
 const ZOOM_MIN: f32 = 0.05;
-const ZOOM_MAX: f32 = 1.;
+const ZOOM_MAX: f32 = 0.2;
 fn zoom_camera(
     projection: Single<&mut Projection, With<Camera>>,
     scroll_input: Res<AccumulatedMouseScroll>,
