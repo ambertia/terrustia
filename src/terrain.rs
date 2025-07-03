@@ -17,7 +17,6 @@ pub struct TerrainPlugin;
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<GameMap>()
-            .add_event::<TileDestroyed>()
             .add_observer(tile_destruction)
             .add_observer(tile_placement)
             .add_systems(Startup, build_terrain)
