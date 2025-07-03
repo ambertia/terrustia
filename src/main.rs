@@ -12,17 +12,19 @@ const BLOCK_SIZE: f32 = 1.0;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins((
+            DefaultPlugins,
+            PhysicsPlugins::default(),
+            TerrainPlugin,
+            CharacterControllerPlugin,
+        ))
         .insert_resource(ClearColor(Color::BLACK))
+        .insert_resource(Gravity(Vec2::NEG_Y * 50.))
         .add_systems(Startup, setup)
         .add_systems(
             Update,
             (track_camera_to_player, zoom_camera, update_coordinates_ui),
         )
-        .add_plugins(PhysicsPlugins::default())
-        .insert_resource(Gravity(Vec2::NEG_Y * 50.))
-        .add_plugins(TerrainPlugin)
-        .add_plugins(CharacterControllerPlugin)
         .run();
 }
 
