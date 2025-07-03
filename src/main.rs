@@ -38,7 +38,17 @@ struct UiCoordinateText;
 
 // Initialize all the stuff in the world
 fn setup(mut commands: Commands) {
-    commands.spawn(MainCamera);
+    commands.spawn((
+        MainCamera,
+        // Make the camera start zoomed in
+        // TODO: This is better than leaving it at 1, but 0.5 feels pretty arbitrary and having
+        // this code block just to build an OrthoProj with a different scale feels stinky
+        Projection::Orthographic({
+            let mut projection = OrthographicProjection::default_2d();
+            projection.scale = 0.1;
+            projection
+        }),
+    ));
 
     // Spawn the player
     commands.spawn((
