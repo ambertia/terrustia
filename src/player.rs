@@ -47,7 +47,7 @@ const JUMP_VEL: f32 = 20.;
 fn keyboard_input(
     keyboard: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
-    player: Single<(&mut LinearVelocity, Option<&Grounded>), With<Player>>,
+    player: Single<(&mut LinearVelocity, Has<Grounded>), With<Player>>,
 ) {
     let (mut player_vel, player_grounded) = player.into_inner();
 
@@ -58,7 +58,7 @@ fn keyboard_input(
     player_vel.x += HORIZONTAL_ACCELERATION * f32::from(right - left) * time.delta_secs();
 
     // If W / Space is pressed and the player is grounded, set their velocity to a fixed value
-    if let Some(_) = player_grounded {
+    if player_grounded {
         if keyboard.any_pressed([KeyCode::KeyW, KeyCode::Space]) {
             player_vel.y = JUMP_VEL;
         }
