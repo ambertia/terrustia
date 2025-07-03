@@ -3,7 +3,6 @@ use bevy::{
     color::palettes::tailwind::{
         AMBER_700, AMBER_900, CYAN_400, GREEN_700, NEUTRAL_950, STONE_500, STONE_700,
     },
-    math::I16Vec2,
     platform::collections::HashMap,
     prelude::*,
     time::Stopwatch,
@@ -34,7 +33,10 @@ pub struct GameMap(HashMap<(i16, i16), Entity>);
 impl GameMap {
     /// Return the tile under a certain position in world space
     pub fn tile_under(&self, world_space: &Vec2) -> Option<Entity> {
-        match self.0.get(&world_to_map_coord(world_space)) {
+        match self
+            .0
+            .get(&(world_space.x.floor_to(), world_space.y.ceil_to()))
+        {
             Some(&e) => Some(e.to_owned()),
             None => None,
         }
@@ -56,12 +58,6 @@ impl Default for TileData {
             bg_id: 0,
             solid: false,
         }
-    }
-}
-
-impl TileData {
-    pub fn is_solid(&self) -> bool {
-        self.solid
     }
 }
 
@@ -262,47 +258,4 @@ fn build_terrain(mut game_map: ResMut<GameMap>, mut commands: Commands) {
             game_map.0.insert((i, j), tile_entity);
         }
     }
-}
-
-/// Return a vec of all extant tile entities within a rectangular coordinate region
-pub fn get_region_tiles(
-    // TODO: This requires the user to pass in a reference to a Resource, which is clunky
-    bottom_left: I16Vec2,
-    top_right: I16Vec2,
-    game_map: &GameMap,
-) -> Vec<Entity> {
-    let mut tiles: Vec<Entity> = Vec::new();
-
-    for i in bottom_left.x..top_right.x {
-        for j in bottom_left.y..top_right.y {
-            if let Some(&e) = game_map.0.get(&(i, j)) {
-                tiles.push(e.to_owned());
-            }
-        }
-    }
-
-    tiles
-}
-
-/// The range of tiles within which part of an object exists
-/// This takes world space coordinates and returns map coordinates
-pub fn occupied_tile_range(center: Vec2, size: Vec2) -> (I16Vec2, I16Vec2) {
-    // Get the edges of the object in world space
-    let top = (center.y + size.y / 2.0) / BLOCK_SIZE;
-    let bottom = (center.y - size.y / 2.0) / BLOCK_SIZE;
-    let right = (center.x + size.x / 2.0) / BLOCK_SIZE;
-    let left = (center.x - size.x / 2.0) / BLOCK_SIZE;
-
-    // Construct I16Vec2's representing map coordinates for the bottom-left and top-right tiles
-    let bottom_left = I16Vec2::new(left.floor_to(), bottom.floor_to());
-    let top_right = I16Vec2::new(right.ceil_to(), top.ceil_to());
-
-    (bottom_left, top_right)
-}
-
-pub fn world_to_map_coord(world_space: &Vec2) -> (i16, i16) {
-    (
-        (world_space.x / BLOCK_SIZE).floor_to(),
-        (world_space.y / BLOCK_SIZE).ceil_to(),
-    )
 }
