@@ -105,6 +105,7 @@ fn spawn_player(mut commands: Commands) {
     ));
 }
 
+// TODO: Re-implement Inventory stuff in its own module
 #[derive(Resource, Default)]
 /// Resource to contain the player's inventory information
 // This only needs to hold an array of block id's for now because the only interactable blocks are
@@ -154,6 +155,7 @@ fn handle_item_pickups(
     }
 }
 
+// TODO: Move toolbar stuff into the UI module
 const TOOLBAR_SLOT_SIZE: f32 = 50.;
 /// Create the toolbar
 fn build_toolbar(mut commands: Commands) {
