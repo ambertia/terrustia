@@ -7,7 +7,8 @@ impl Plugin for CharacterControllerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, (update_grounded, keyboard_input).chain())
             .add_systems(Startup, build_toolbar)
-            .init_resource::<PlayerInventory>();
+            .init_resource::<PlayerInventory>()
+            .add_event::<ItemPickedUp>();
     }
 }
 
@@ -79,6 +80,9 @@ struct ItemStack {
     count: usize,
     item_id: usize,
 }
+
+#[derive(Event)]
+pub struct ItemPickedUp(pub usize);
 
 const TOOLBAR_SLOT_SIZE: f32 = 50.;
 /// Create the toolbar
