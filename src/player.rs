@@ -77,9 +77,8 @@ fn keyboard_input(
     }
 }
 
-const PLAYER_WIDTH: f32 = 2.;
-const PLAYER_HEIGHT: f32 = 3.;
-
+pub const PLAYER_WIDTH: f32 = 2.;
+pub const PLAYER_HEIGHT: f32 = 3.;
 fn spawn_player(mut commands: Commands) {
     commands.spawn((
         Player,

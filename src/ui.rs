@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{PLAYER_HEIGHT, player::Player};
+use crate::player::{PLAYER_HEIGHT, Player};
 
 pub struct GameUiPlugin;
 
