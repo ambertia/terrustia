@@ -1,5 +1,8 @@
 use avian2d::{math::Vector, prelude::*};
-use bevy::prelude::*;
+use bevy::{
+    color::palettes::tailwind::{GRAY_400, GRAY_950},
+    prelude::*,
+};
 
 pub struct CharacterControllerPlugin;
 
