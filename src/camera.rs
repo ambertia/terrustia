@@ -2,9 +2,9 @@ use bevy::{input::mouse::AccumulatedMouseScroll, prelude::*};
 
 use crate::player::Player;
 
-pub struct GameCameraPlugin;
+pub struct CameraPlugin;
 
-impl Plugin for GameCameraPlugin {
+impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup_camera)
             .add_systems(Update, (track_camera_to_player, zoom_camera));

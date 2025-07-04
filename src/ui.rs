@@ -2,9 +2,9 @@ use bevy::prelude::*;
 
 use crate::player::{PLAYER_HEIGHT, Player};
 
-pub struct GameUiPlugin;
+pub struct UiPlugin;
 
-impl Plugin for GameUiPlugin {
+impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, build_ui)
             .add_systems(Update, update_coordinates_ui);
