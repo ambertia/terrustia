@@ -10,6 +10,8 @@ use bevy::{
 };
 use round_to::{CeilTo, FloorTo};
 
+use crate::player::ItemPickedUp;
+
 pub struct TerrainPlugin;
 
 impl Plugin for TerrainPlugin {
@@ -108,6 +110,7 @@ fn tile_destruction(
     mut tiles: Query<(&mut TileData, Option<&mut BreakTimer>)>,
     mut commands: Commands,
     time_fixed: Res<Time<Fixed>>,
+    mut item_events: EventWriter<ItemPickedUp>,
 ) {
     let (mut tile, break_timer) = tiles.get_mut(trigger.target()).unwrap();
 
@@ -132,6 +135,9 @@ fn tile_destruction(
     if break_timer.0.elapsed_secs() < BREAK_TIME {
         return;
     }
+
+    // Send the item to the player's inventory
+    item_events.write(ItemPickedUp(tile.fg_id));
 
     // Modify the TileData and remove the BreakTimer component
     commands.entity(trigger.target()).remove::<BreakTimer>();
