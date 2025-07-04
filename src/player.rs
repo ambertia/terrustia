@@ -9,7 +9,8 @@ pub struct CharacterControllerPlugin;
 impl Plugin for CharacterControllerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, (update_grounded, keyboard_input).chain())
-            .add_systems(Startup, build_toolbar);
+            .add_systems(Startup, build_toolbar)
+            .init_resource::<PlayerInventory>();
     }
 }
 
@@ -67,6 +68,19 @@ fn keyboard_input(
             player_vel.y = JUMP_VEL;
         }
     }
+}
+
+#[derive(Resource, Default)]
+/// Resource to contain the player's inventory information
+// This only needs to hold an array of block id's for now because the only interactable blocks are
+// the three types of foreground blocks, which are all stackable. This will change in the future
+// and require more complex inventory management.
+// Option should default to None which is perfect.
+struct PlayerInventory([Option<ItemStack>; 5]);
+
+struct ItemStack {
+    count: usize,
+    item_id: usize,
 }
 
 const TOOLBAR_SLOT_SIZE: f32 = 50.;
