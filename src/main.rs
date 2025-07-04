@@ -2,9 +2,11 @@ use avian2d::{PhysicsPlugins, math::Vector, prelude::*};
 use bevy::{color::palettes::css::WHITE, input::mouse::AccumulatedMouseScroll, prelude::*};
 use player::{CharacterControllerPlugin, Player};
 use terrain::TerrainPlugin;
+use ui::GameUiPlugin;
 
 mod player;
 mod terrain;
+mod ui;
 
 const PLAYER_HEIGHT: f32 = 3.0;
 const PLAYER_WIDTH: f32 = 2.0;
@@ -16,24 +18,18 @@ fn main() {
             PhysicsPlugins::default(),
             TerrainPlugin,
             CharacterControllerPlugin,
+            GameUiPlugin,
         ))
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(Gravity(Vec2::NEG_Y * 50.))
         .add_systems(Startup, setup)
-        .add_systems(
-            Update,
-            (track_camera_to_player, zoom_camera, update_coordinates_ui),
-        )
+        .add_systems(Update, (track_camera_to_player, zoom_camera))
         .run();
 }
 
 #[derive(Component)]
 #[require(Camera2d)]
 struct MainCamera;
-
-#[derive(Component)]
-#[require(Text)]
-struct UiCoordinateText;
 
 // Initialize all the stuff in the world
 fn setup(mut commands: Commands) {
@@ -73,8 +69,6 @@ fn setup(mut commands: Commands) {
         CollisionMargin(0.05),
         LinearDamping(0.1),
     ));
-
-    commands.spawn(UiCoordinateText);
 }
 
 const CATCH_UP_TIME: f32 = 0.33;
@@ -114,15 +108,4 @@ fn zoom_camera(
         }
         _ => {}
     }
-}
-
-fn update_coordinates_ui(
-    mut text: Single<&mut Text, With<UiCoordinateText>>,
-    player: Single<&Transform, With<Player>>,
-) {
-    text.0 = format!(
-        "({0:.1}, {1:.1})",
-        player.translation.x,
-        player.translation.y - PLAYER_HEIGHT / 2.,
-    );
 }
