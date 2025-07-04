@@ -5,7 +5,8 @@ pub struct CharacterControllerPlugin;
 
 impl Plugin for CharacterControllerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (update_grounded, keyboard_input).chain());
+        app.add_systems(Update, (update_grounded, keyboard_input).chain())
+            .add_systems(Startup, build_toolbar);
     }
 }
 
@@ -63,6 +64,28 @@ fn keyboard_input(
             player_vel.y = JUMP_VEL;
         }
     }
+}
+
+const TOOLBAR_SLOT_SIZE: f32 = 50.;
+/// Create the toolbar
+fn build_toolbar(mut commands: Commands) {
+    let toolbar_base = Node {
+        margin: UiRect::all(Val::Px(5.)),
+        column_gap: Val::Px(10.),
+        justify_self: JustifySelf::End,
+        ..default()
+    };
+    commands.spawn((
+        toolbar_base,
+        children![
+            // This is a little ugly but it works just fine
+            ToolbarButtonBundle::default(),
+            ToolbarButtonBundle::default(),
+            ToolbarButtonBundle::default(),
+            ToolbarButtonBundle::default(),
+            ToolbarButtonBundle::default(),
+        ],
+    ));
 }
 
 #[derive(Bundle)]
