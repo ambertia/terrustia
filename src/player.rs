@@ -5,10 +5,16 @@ pub struct CharacterControllerPlugin;
 
 impl Plugin for CharacterControllerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (update_grounded, keyboard_input).chain())
-            .add_systems(Startup, build_toolbar)
-            .init_resource::<PlayerInventory>()
-            .add_event::<ItemPickedUp>();
+        app.add_systems(
+            Update,
+            (
+                (update_grounded, keyboard_input).chain(),
+                handle_item_pickups,
+            ),
+        )
+        .add_systems(Startup, build_toolbar)
+        .init_resource::<PlayerInventory>()
+        .add_event::<ItemPickedUp>();
     }
 }
 
@@ -83,6 +89,39 @@ struct ItemStack {
 
 #[derive(Event)]
 pub struct ItemPickedUp(pub usize);
+
+/// Process all pending ItemPickedUp events and modify the player's inventory accordingly
+fn handle_item_pickups(
+    mut events: EventReader<ItemPickedUp>,
+    mut inventory: ResMut<PlayerInventory>,
+) {
+    for event in events.read() {
+        let mut first_empty_slot: Option<usize> = None;
+        // Iterate over all inventory slots
+        for i in 0..(inventory.0.len()) {
+            match &inventory.0[i] {
+                // If the slot has a stack with matching item_id, put the item in this stack
+                Some(s) if s.item_id == event.0 => {
+                    inventory.0[i] = Some(ItemStack {
+                        item_id: s.item_id,
+                        count: s.count + 1,
+                    });
+                    return;
+                }
+                // Track the first empty inventory slot we find, if any
+                None if first_empty_slot.is_none() => first_empty_slot = Some(i),
+                _ => {}
+            }
+        }
+        // If no such stack exists, put the item in the first empty slot
+        if let Some(i) = first_empty_slot {
+            inventory.0[i] = Some(ItemStack {
+                item_id: event.0,
+                count: 1,
+            });
+        }
+    }
+}
 
 const TOOLBAR_SLOT_SIZE: f32 = 50.;
 /// Create the toolbar
