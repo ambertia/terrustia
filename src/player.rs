@@ -64,3 +64,30 @@ fn keyboard_input(
         }
     }
 }
+
+#[derive(Bundle)]
+/// A bundle to simplify the creation of toolbar buttons with predefined properties
+struct ToolbarButtonBundle {
+    node: Node,
+    text: Text,
+    border_radius: BorderRadius,
+    border_color: BorderColor,
+    background_color: BackgroundColor,
+}
+
+impl Default for ToolbarButtonBundle {
+    fn default() -> Self {
+        ToolbarButtonBundle {
+            node: Node {
+                height: Val::Px(TOOLBAR_SLOT_SIZE),
+                width: Val::Px(TOOLBAR_SLOT_SIZE),
+                border: UiRect::all(Val::Px(10.)),
+                ..default()
+            },
+            text: Text::default(),
+            border_radius: BorderRadius::all(Val::Px(5.)),
+            border_color: BorderColor::from(GRAY_950),
+            background_color: BackgroundColor::from(Srgba::new(0.0, 0.0, 0.0, 0.4)),
+        }
+    }
+}
