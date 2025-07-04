@@ -15,7 +15,7 @@ impl Plugin for CharacterControllerPlugin {
                 handle_item_pickups,
             ),
         )
-        .add_systems(Startup, build_toolbar)
+        .add_systems(Startup, (build_toolbar, spawn_player))
         .init_resource::<PlayerInventory>()
         .add_event::<ItemPickedUp>();
     }
