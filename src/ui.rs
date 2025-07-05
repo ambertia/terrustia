@@ -93,3 +93,18 @@ impl ButtonTextLabel {
         }
     }
 }
+
+#[derive(Bundle)]
+struct ButtonItemIcon {
+    node: Node,
+    image: ImageNode,
+}
+
+impl ButtonItemIcon {
+    fn from_color(color: Color) -> Self {
+        ButtonItemIcon {
+            node: Node::default(),
+            image: ImageNode::solid_color(color),
+        }
+    }
+}
