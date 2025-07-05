@@ -1,8 +1,5 @@
 use avian2d::{math::Vector, prelude::*};
-use bevy::{
-    color::palettes::{css::WHITE, tailwind::GRAY_950},
-    prelude::*,
-};
+use bevy::prelude::*;
 
 use crate::inventory::Inventory;
 
@@ -11,7 +8,7 @@ pub struct CharacterControllerPlugin;
 impl Plugin for CharacterControllerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, ((update_grounded, keyboard_input).chain(),))
-            .add_systems(Startup, (build_toolbar, spawn_player));
+            .add_systems(Startup, spawn_player);
     }
 }
 
@@ -79,7 +76,7 @@ fn spawn_player(mut commands: Commands) {
         RigidBody::Dynamic,
         Collider::rectangle(PLAYER_WIDTH - 0.1, PLAYER_HEIGHT - 0.1),
         Sprite {
-            color: Color::from(WHITE),
+            color: Color::from(Srgba::new(1., 1., 1., 1.)),
             custom_size: Some(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT)),
             ..default()
         },
@@ -98,54 +95,4 @@ fn spawn_player(mut commands: Commands) {
         LinearDamping(0.1),
         Inventory::default(),
     ));
-}
-
-// TODO: Move toolbar stuff into the UI module
-const TOOLBAR_SLOT_SIZE: f32 = 50.;
-/// Create the toolbar
-fn build_toolbar(mut commands: Commands) {
-    let toolbar_base = Node {
-        margin: UiRect::all(Val::Px(5.)),
-        column_gap: Val::Px(10.),
-        justify_self: JustifySelf::End,
-        ..default()
-    };
-    commands.spawn((
-        toolbar_base,
-        children![
-            // This is a little ugly but it works just fine
-            ToolbarButtonBundle::default(),
-            ToolbarButtonBundle::default(),
-            ToolbarButtonBundle::default(),
-            ToolbarButtonBundle::default(),
-            ToolbarButtonBundle::default(),
-        ],
-    ));
-}
-
-#[derive(Bundle)]
-/// A bundle to simplify the creation of toolbar buttons with predefined properties
-struct ToolbarButtonBundle {
-    node: Node,
-    text: Text,
-    border_radius: BorderRadius,
-    border_color: BorderColor,
-    background_color: BackgroundColor,
-}
-
-impl Default for ToolbarButtonBundle {
-    fn default() -> Self {
-        ToolbarButtonBundle {
-            node: Node {
-                height: Val::Px(TOOLBAR_SLOT_SIZE),
-                width: Val::Px(TOOLBAR_SLOT_SIZE),
-                border: UiRect::all(Val::Px(10.)),
-                ..default()
-            },
-            text: Text::default(),
-            border_radius: BorderRadius::all(Val::Px(5.)),
-            border_color: BorderColor::from(GRAY_950),
-            background_color: BackgroundColor::from(Srgba::new(0.0, 0.0, 0.0, 0.4)),
-        }
-    }
 }

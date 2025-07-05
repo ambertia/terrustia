@@ -6,7 +6,7 @@ pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, build_ui)
+        app.add_systems(Startup, (build_ui, build_toolbar))
             .add_systems(Update, update_coordinates_ui);
     }
 }
@@ -28,4 +28,53 @@ fn update_coordinates_ui(
 
 fn build_ui(mut commands: Commands) {
     commands.spawn(UiCoordinateText);
+}
+
+const TOOLBAR_SLOT_SIZE: f32 = 50.;
+/// Create the toolbar
+fn build_toolbar(mut commands: Commands) {
+    let toolbar_base = Node {
+        margin: UiRect::all(Val::Px(5.)),
+        column_gap: Val::Px(10.),
+        justify_self: JustifySelf::End,
+        ..default()
+    };
+    commands.spawn((
+        toolbar_base,
+        children![
+            // This is a little ugly but it works just fine
+            ToolbarButtonBundle::default(),
+            ToolbarButtonBundle::default(),
+            ToolbarButtonBundle::default(),
+            ToolbarButtonBundle::default(),
+            ToolbarButtonBundle::default(),
+        ],
+    ));
+}
+
+#[derive(Bundle)]
+/// A bundle to simplify the creation of toolbar buttons with predefined properties
+struct ToolbarButtonBundle {
+    node: Node,
+    text: Text,
+    border_radius: BorderRadius,
+    border_color: BorderColor,
+    background_color: BackgroundColor,
+}
+
+impl Default for ToolbarButtonBundle {
+    fn default() -> Self {
+        ToolbarButtonBundle {
+            node: Node {
+                height: Val::Px(TOOLBAR_SLOT_SIZE),
+                width: Val::Px(TOOLBAR_SLOT_SIZE),
+                border: UiRect::all(Val::Px(10.)),
+                ..default()
+            },
+            text: Text::default(),
+            border_radius: BorderRadius::all(Val::Px(5.)),
+            border_color: BorderColor::from(Srgba::new(0.1, 0.1, 0.1, 1.)),
+            background_color: BackgroundColor::from(Srgba::new(0.0, 0.0, 0.0, 0.4)),
+        }
+    }
 }
