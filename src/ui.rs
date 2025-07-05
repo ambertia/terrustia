@@ -78,3 +78,18 @@ impl Default for ToolbarButtonBundle {
         }
     }
 }
+
+#[derive(Bundle)]
+struct ButtonTextLabel {
+    node: Node,
+    text: Text,
+}
+
+impl ButtonTextLabel {
+    fn new(text: String) -> Self {
+        ButtonTextLabel {
+            node: Node::default(),
+            text: Text(text),
+        }
+    }
+}
