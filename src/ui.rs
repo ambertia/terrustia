@@ -1,4 +1,7 @@
-use bevy::prelude::*;
+use bevy::{
+    color::palettes::tailwind::{AMBER_700, GREEN_700, STONE_500},
+    prelude::*,
+};
 
 use crate::player::{PLAYER_HEIGHT, Player};
 
@@ -42,11 +45,41 @@ fn build_toolbar(mut commands: Commands) {
         toolbar_base,
         children![
             // This is a little ugly but it works just fine
-            ToolbarButtonBundle::default(),
-            ToolbarButtonBundle::default(),
-            ToolbarButtonBundle::default(),
-            ToolbarButtonBundle::default(),
-            ToolbarButtonBundle::default(),
+            (
+                ToolbarButtonBundle::default(),
+                children![
+                    ButtonTextLabel::new("1".to_owned()),
+                    ButtonItemIcon::from_color(AMBER_700.into()),
+                ],
+            ),
+            (
+                ToolbarButtonBundle::default(),
+                children![
+                    ButtonTextLabel::new("2".to_owned()),
+                    ButtonItemIcon::from_color(GREEN_700.into()),
+                ],
+            ),
+            (
+                ToolbarButtonBundle::default(),
+                children![
+                    ButtonTextLabel::new("3".to_owned()),
+                    ButtonItemIcon::from_color(STONE_500.into()),
+                ],
+            ),
+            (
+                ToolbarButtonBundle::default(),
+                children![
+                    ButtonTextLabel::new("4".to_owned()),
+                    ButtonItemIcon::from_color(AMBER_700.into()),
+                ],
+            ),
+            (
+                ToolbarButtonBundle::default(),
+                children![
+                    ButtonTextLabel::new("5".to_owned()),
+                    ButtonItemIcon::from_color(GREEN_700.into()),
+                ],
+            ),
         ],
     ));
 }
