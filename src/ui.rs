@@ -100,7 +100,7 @@ impl Default for ToolbarButton {
             node: Node {
                 height: Val::Px(TOOLBAR_SLOT_SIZE),
                 width: Val::Px(TOOLBAR_SLOT_SIZE),
-                border: UiRect::all(Val::Px(10.)),
+                border: UiRect::all(Val::Px(2.)),
                 ..default()
             },
             border_radius: BorderRadius::all(Val::Px(5.)),
