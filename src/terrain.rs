@@ -10,7 +10,7 @@ use bevy::{
 };
 use round_to::{CeilTo, FloorTo};
 
-use crate::player::ItemPickedUp;
+use crate::inventory::ItemPickedUp;
 
 pub struct TerrainPlugin;
 

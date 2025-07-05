@@ -2,6 +2,7 @@ use avian2d::prelude::*;
 use bevy::prelude::*;
 
 mod camera;
+mod inventory;
 mod player;
 mod terrain;
 mod ui;
@@ -14,6 +15,7 @@ impl Plugin for TerrustiaGamePlugin {
             DefaultPlugins,
             PhysicsPlugins::default(),
             camera::CameraPlugin,
+            inventory::InventoryPlugin,
             player::CharacterControllerPlugin,
             terrain::TerrainPlugin,
             ui::UiPlugin,
