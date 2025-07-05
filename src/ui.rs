@@ -30,7 +30,6 @@ fn build_ui(mut commands: Commands) {
     commands.spawn(UiCoordinateText);
 }
 
-const TOOLBAR_SLOT_SIZE: f32 = 50.;
 /// Create the toolbar
 fn build_toolbar(mut commands: Commands) {
     let toolbar_base = Node {
@@ -62,6 +61,7 @@ struct ToolbarButtonBundle {
     background_color: BackgroundColor,
 }
 
+const TOOLBAR_SLOT_SIZE: f32 = 50.;
 impl Default for ToolbarButtonBundle {
     fn default() -> Self {
         ToolbarButtonBundle {
