@@ -46,35 +46,35 @@ fn build_toolbar(mut commands: Commands) {
         children![
             // This is a little ugly but it works just fine
             (
-                ToolbarButtonBundle::default(),
+                ToolbarButton::default(),
                 children![
                     ButtonTextLabel::new("1".to_owned()),
                     ButtonItemIcon::from_color(AMBER_700.into()),
                 ],
             ),
             (
-                ToolbarButtonBundle::default(),
+                ToolbarButton::default(),
                 children![
                     ButtonTextLabel::new("2".to_owned()),
                     ButtonItemIcon::from_color(GREEN_700.into()),
                 ],
             ),
             (
-                ToolbarButtonBundle::default(),
+                ToolbarButton::default(),
                 children![
                     ButtonTextLabel::new("3".to_owned()),
                     ButtonItemIcon::from_color(STONE_500.into()),
                 ],
             ),
             (
-                ToolbarButtonBundle::default(),
+                ToolbarButton::default(),
                 children![
                     ButtonTextLabel::new("4".to_owned()),
                     ButtonItemIcon::from_color(AMBER_700.into()),
                 ],
             ),
             (
-                ToolbarButtonBundle::default(),
+                ToolbarButton::default(),
                 children![
                     ButtonTextLabel::new("5".to_owned()),
                     ButtonItemIcon::from_color(GREEN_700.into()),
@@ -86,7 +86,7 @@ fn build_toolbar(mut commands: Commands) {
 
 #[derive(Bundle)]
 /// A bundle to simplify the creation of toolbar buttons with predefined properties
-struct ToolbarButtonBundle {
+struct ToolbarButton {
     node: Node,
     border_radius: BorderRadius,
     border_color: BorderColor,
@@ -94,9 +94,9 @@ struct ToolbarButtonBundle {
 }
 
 const TOOLBAR_SLOT_SIZE: f32 = 50.;
-impl Default for ToolbarButtonBundle {
+impl Default for ToolbarButton {
     fn default() -> Self {
-        ToolbarButtonBundle {
+        ToolbarButton {
             node: Node {
                 height: Val::Px(TOOLBAR_SLOT_SIZE),
                 width: Val::Px(TOOLBAR_SLOT_SIZE),
