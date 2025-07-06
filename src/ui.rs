@@ -122,6 +122,14 @@ struct ButtonTextLabel {
 
 impl ButtonTextLabel {
     fn new(text: String) -> Self {
+        let mut this_label = ButtonTextLabel::default();
+        this_label.text = Text(text);
+        this_label
+    }
+}
+
+impl Default for ButtonTextLabel {
+    fn default() -> Self {
         ButtonTextLabel {
             node: Node {
                 grid_row: GridPlacement::start_end(1, 1),
@@ -130,7 +138,7 @@ impl ButtonTextLabel {
                 align_self: AlignSelf::End,
                 ..default()
             },
-            text: Text(text),
+            text: Text::default(),
             text_font: TextFont::default()
                 .with_line_height(bevy::text::LineHeight::RelativeToFont(1.)),
             z_index: ZIndex(1),
