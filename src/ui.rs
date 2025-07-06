@@ -101,6 +101,7 @@ impl Default for ToolbarButton {
                 height: Val::Px(TOOLBAR_SLOT_SIZE),
                 width: Val::Px(TOOLBAR_SLOT_SIZE),
                 border: UiRect::all(Val::Px(2.)),
+                display: Display::Grid,
                 ..default()
             },
             border_radius: BorderRadius::all(Val::Px(5.)),
@@ -119,7 +120,13 @@ struct ButtonTextLabel {
 impl ButtonTextLabel {
     fn new(text: String) -> Self {
         ButtonTextLabel {
-            node: Node::default(),
+            node: Node {
+                grid_row: GridPlacement::start_end(1, 1),
+                grid_column: GridPlacement::start_end(1, 1),
+                justify_self: JustifySelf::End,
+                align_self: AlignSelf::End,
+                ..default()
+            },
             text: Text(text),
         }
     }
@@ -134,7 +141,13 @@ struct ButtonItemIcon {
 impl ButtonItemIcon {
     fn from_color(color: Color) -> Self {
         ButtonItemIcon {
-            node: Node::default(),
+            node: Node {
+                justify_self: JustifySelf::Center,
+                align_self: AlignSelf::Center,
+                grid_row: GridPlacement::start_end(1, 1),
+                grid_column: GridPlacement::start_end(1, 1),
+                ..default()
+            },
             image: ImageNode::solid_color(color),
         }
     }
