@@ -116,6 +116,7 @@ struct ButtonTextLabel {
     node: Node,
     text: Text,
     text_font: TextFont,
+    z_index: ZIndex,
 }
 
 impl ButtonTextLabel {
@@ -131,6 +132,7 @@ impl ButtonTextLabel {
             text: Text(text),
             text_font: TextFont::default()
                 .with_line_height(bevy::text::LineHeight::RelativeToFont(1.)),
+            z_index: ZIndex(1),
         }
     }
 }
