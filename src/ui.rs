@@ -147,6 +147,14 @@ struct ButtonItemIcon {
 
 impl ButtonItemIcon {
     fn from_color(color: Color) -> Self {
+        let mut this_icon = ButtonItemIcon::default();
+        this_icon.image = ImageNode::solid_color(color);
+        this_icon
+    }
+}
+
+impl Default for ButtonItemIcon {
+    fn default() -> Self {
         ButtonItemIcon {
             node: Node {
                 height: Val::Percent(70.),
@@ -157,7 +165,7 @@ impl ButtonItemIcon {
                 grid_column: GridPlacement::start_end(1, 1),
                 ..default()
             },
-            image: ImageNode::solid_color(color),
+            image: ImageNode::default(),
         }
     }
 }
