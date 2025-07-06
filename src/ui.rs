@@ -115,6 +115,7 @@ impl Default for ToolbarButton {
 struct ButtonTextLabel {
     node: Node,
     text: Text,
+    text_font: TextFont,
 }
 
 impl ButtonTextLabel {
@@ -128,6 +129,8 @@ impl ButtonTextLabel {
                 ..default()
             },
             text: Text(text),
+            text_font: TextFont::default()
+                .with_line_height(bevy::text::LineHeight::RelativeToFont(1.)),
         }
     }
 }
