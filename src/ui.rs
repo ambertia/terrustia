@@ -145,6 +145,8 @@ impl ButtonItemIcon {
     fn from_color(color: Color) -> Self {
         ButtonItemIcon {
             node: Node {
+                height: Val::Percent(80.),
+                width: Val::Percent(80.),
                 justify_self: JustifySelf::Center,
                 align_self: AlignSelf::Center,
                 grid_row: GridPlacement::start_end(1, 1),
