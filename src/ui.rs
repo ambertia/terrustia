@@ -112,6 +112,7 @@ impl Default for ToolbarButton {
 }
 
 #[derive(Bundle)]
+/// A bundle to ease the spawning of standardized Text (item count) labels for the toolbar buttons
 struct ButtonTextLabel {
     node: Node,
     text: Text,
@@ -138,6 +139,7 @@ impl ButtonTextLabel {
 }
 
 #[derive(Bundle)]
+/// A bundle to ease the spawning of standardized ImageNodes for the toolbar buttons
 struct ButtonItemIcon {
     node: Node,
     image: ImageNode,
