@@ -84,9 +84,14 @@ fn build_toolbar(mut commands: Commands) {
     ));
 }
 
+#[derive(Component)]
+/// Marker component for toolbar buttons
+struct ToolbarButton;
+
 #[derive(Bundle)]
 /// A bundle to simplify the creation of toolbar buttons with predefined properties
 struct ToolbarButtonBundle {
+    marker: ToolbarButton,
     node: Node,
     border_radius: BorderRadius,
     border_color: BorderColor,
@@ -97,6 +102,7 @@ const TOOLBAR_SLOT_SIZE: f32 = 50.;
 impl Default for ToolbarButtonBundle {
     fn default() -> Self {
         ToolbarButtonBundle {
+            marker: ToolbarButton,
             node: Node {
                 height: Val::Px(TOOLBAR_SLOT_SIZE),
                 width: Val::Px(TOOLBAR_SLOT_SIZE),
