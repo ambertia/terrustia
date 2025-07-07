@@ -116,7 +116,7 @@ impl Default for ToolbarButtonBundle {
                 ..default()
             },
             border_radius: BorderRadius::all(Val::Px(5.)),
-            border_color: BorderColor::from(Srgba::new(0.1, 0.1, 0.1, 1.)),
+            border_color: BorderColor::from(Srgba::new(0.1, 0.1, 0.1, 0.6)),
             background_color: BackgroundColor::from(Srgba::new(0.0, 0.0, 0.0, 0.4)),
         }
     }
