@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use crate::player::Player;
+use crate::{
+    player::Player,
+    ui::{Toolbar, UpdateToolbarButton},
+};
 
 pub struct InventoryPlugin;
 
@@ -21,6 +24,7 @@ pub struct Inventory([Option<ItemStack>; 5]);
 
 // TODO: Not sure I want this to be totally public? Would have to move around the implementation
 // for the toolbar update or add functions somehow
+#[derive(Clone, Copy)]
 pub struct ItemStack {
     pub count: usize,
     pub item_id: usize,
@@ -33,6 +37,8 @@ pub struct ItemPickedUp(pub usize);
 fn handle_item_pickups(
     mut events: EventReader<ItemPickedUp>,
     mut inventory: Single<&mut Inventory, With<Player>>,
+    toolbar: Res<Toolbar>,
+    mut commands: Commands,
 ) {
     for event in events.read() {
         let mut first_empty_slot: Option<usize> = None;
@@ -45,6 +51,12 @@ fn handle_item_pickups(
                         item_id: s.item_id,
                         count: s.count + 1,
                     });
+                    // Update toolbar
+                    if let Some(b) = toolbar.0.get(i) {
+                        commands
+                            .entity(b.to_owned())
+                            .trigger(UpdateToolbarButton(inventory.0[i]));
+                    }
                     return;
                 }
                 // Track the first empty inventory slot we find, if any
@@ -52,12 +64,19 @@ fn handle_item_pickups(
                 _ => {}
             }
         }
+
         // If no such stack exists, put the item in the first empty slot
         if let Some(i) = first_empty_slot {
             inventory.0[i] = Some(ItemStack {
                 item_id: event.0,
                 count: 1,
             });
+            // Update toolbar
+            if let Some(b) = toolbar.0.get(i) {
+                commands
+                    .entity(b.to_owned())
+                    .trigger(UpdateToolbarButton(inventory.0[i]));
+            }
         }
     }
 }

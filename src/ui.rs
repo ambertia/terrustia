@@ -91,7 +91,7 @@ fn build_toolbar(mut commands: Commands) {
 }
 
 #[derive(Resource, Default)]
-struct Toolbar(Vec<Entity>);
+pub struct Toolbar(pub Vec<Entity>);
 
 #[derive(Component)]
 #[component(on_add = push_toolbar_button)]
@@ -202,7 +202,7 @@ impl Default for ButtonItemIcon {
 
 #[derive(Event)]
 /// Update a toolbar button's visual appearance to match a given ItemStack
-struct UpdateToolbarButton<'a>(&'a Option<ItemStack>);
+pub struct UpdateToolbarButton(pub Option<ItemStack>);
 
 /// Change the appearance of a toolbar button when the contents of the slot it represents change
 fn update_toolbar_button(
