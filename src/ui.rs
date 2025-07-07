@@ -76,7 +76,10 @@ fn build_toolbar(mut commands: Commands) {
 }
 
 #[derive(Resource, Default)]
-pub struct Toolbar(pub Vec<Entity>);
+pub struct Toolbar {
+    pub buttons: Vec<Entity>,
+    pub selected: usize,
+}
 
 #[derive(Component)]
 #[component(on_add = push_toolbar_button)]
@@ -86,7 +89,7 @@ struct ToolbarButton;
 /// Component hook to register ToolbarButtons with the Toolbar Resource
 fn push_toolbar_button(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
     if let Some(mut toolbar) = world.get_resource_mut::<Toolbar>() {
-        toolbar.0.push(entity);
+        toolbar.buttons.push(entity);
     }
 }
 

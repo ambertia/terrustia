@@ -52,7 +52,7 @@ fn handle_item_pickups(
                         count: s.count + 1,
                     });
                     // Update toolbar
-                    if let Some(b) = toolbar.0.get(i) {
+                    if let Some(b) = toolbar.buttons.get(i) {
                         commands
                             .entity(b.to_owned())
                             .trigger(UpdateToolbarButton(inventory.0[i]));
@@ -72,7 +72,7 @@ fn handle_item_pickups(
                 count: 1,
             });
             // Update toolbar
-            if let Some(b) = toolbar.0.get(i) {
+            if let Some(b) = toolbar.buttons.get(i) {
                 commands
                     .entity(b.to_owned())
                     .trigger(UpdateToolbarButton(inventory.0[i]));
