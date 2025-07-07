@@ -12,7 +12,8 @@ pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (build_ui, build_toolbar))
+        app.init_resource::<Toolbar>()
+            .add_systems(Startup, (build_ui, build_toolbar))
             .add_systems(Update, update_coordinates_ui)
             .add_observer(update_toolbar_button);
     }
@@ -87,6 +88,9 @@ fn build_toolbar(mut commands: Commands) {
         ],
     ));
 }
+
+#[derive(Resource, Default)]
+struct Toolbar(Vec<Entity>);
 
 #[derive(Component)]
 /// Marker component for toolbar buttons
