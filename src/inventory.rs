@@ -19,9 +19,11 @@ impl Plugin for InventoryPlugin {
 // Option should default to None which is perfect.
 pub struct Inventory([Option<ItemStack>; 5]);
 
-struct ItemStack {
-    count: usize,
-    item_id: usize,
+// TODO: Not sure I want this to be totally public? Would have to move around the implementation
+// for the toolbar update or add functions somehow
+pub struct ItemStack {
+    pub count: usize,
+    pub item_id: usize,
 }
 
 #[derive(Event)]
