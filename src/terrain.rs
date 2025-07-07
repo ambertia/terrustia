@@ -147,13 +147,18 @@ fn tile_destruction(
     commands.entity(trigger.target()).remove::<Collider>();
 }
 
-// BUG: Shouldn't be able to place over top of existing tiles
 fn tile_placement(
     trigger: Trigger<TilePlaced>,
     mut tiles: Query<&mut TileData>,
     mut commands: Commands,
 ) {
     let mut tile = tiles.get_mut(trigger.target()).unwrap();
+
+    // Solid objects can't be placed on top of other solid objects
+    if tile.solid {
+        return;
+    }
+
     tile.fg_id = 1;
     tile.solid = true;
     commands
