@@ -7,7 +7,7 @@ pub struct CharacterControllerPlugin;
 
 impl Plugin for CharacterControllerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, ((update_grounded, keyboard_input).chain(),))
+        app.add_systems(Update, ((update_grounded, keyboard_movement).chain(),))
             .add_systems(Startup, spawn_player);
     }
 }
@@ -47,7 +47,7 @@ const HORIZONTAL_VELOCITY_MAX: f32 = 20.;
 const HORIZONTAL_ACCELERATION: f32 = 10.;
 const JUMP_VEL: f32 = 20.;
 /// Check for input every frame
-fn keyboard_input(
+fn keyboard_movement(
     keyboard: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
     player: Single<(&mut LinearVelocity, Has<Grounded>), With<Player>>,
