@@ -53,38 +53,23 @@ fn build_toolbar(mut commands: Commands) {
             // This is a little ugly but it works just fine
             (
                 ToolbarButtonBundle::default(),
-                children![
-                    ButtonTextLabel::new("1".to_owned()),
-                    ButtonItemIcon::from_color(AMBER_700.into()),
-                ],
+                children![ButtonTextLabel::default(), ButtonItemIcon::default(),],
             ),
             (
                 ToolbarButtonBundle::default(),
-                children![
-                    ButtonTextLabel::new("2".to_owned()),
-                    ButtonItemIcon::from_color(GREEN_700.into()),
-                ],
+                children![ButtonTextLabel::default(), ButtonItemIcon::default(),],
             ),
             (
                 ToolbarButtonBundle::default(),
-                children![
-                    ButtonTextLabel::new("3".to_owned()),
-                    ButtonItemIcon::from_color(STONE_500.into()),
-                ],
+                children![ButtonTextLabel::default(), ButtonItemIcon::default(),],
             ),
             (
                 ToolbarButtonBundle::default(),
-                children![
-                    ButtonTextLabel::new("4".to_owned()),
-                    ButtonItemIcon::from_color(AMBER_700.into()),
-                ],
+                children![ButtonTextLabel::default(), ButtonItemIcon::default(),],
             ),
             (
                 ToolbarButtonBundle::default(),
-                children![
-                    ButtonTextLabel::new("5".to_owned()),
-                    ButtonItemIcon::from_color(GREEN_700.into()),
-                ],
+                children![ButtonTextLabel::default(), ButtonItemIcon::default(),],
             ),
         ],
     ));
@@ -144,7 +129,7 @@ struct ButtonTextLabel {
 }
 
 impl ButtonTextLabel {
-    fn new(text: String) -> Self {
+    fn _new(text: String) -> Self {
         let mut this_label = ButtonTextLabel::default();
         this_label.text = Text(text);
         this_label
@@ -177,7 +162,7 @@ struct ButtonItemIcon {
 }
 
 impl ButtonItemIcon {
-    fn from_color(color: Color) -> Self {
+    fn _from_color(color: Color) -> Self {
         let mut this_icon = ButtonItemIcon::default();
         this_icon.image = ImageNode::solid_color(color);
         this_icon
