@@ -15,7 +15,7 @@ impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Toolbar>()
             .add_systems(Startup, (build_ui, build_toolbar))
-            .add_systems(Update, update_coordinates_ui)
+            .add_systems(Update, (update_coordinates_ui, keyboard_toolbar))
             .add_observer(update_toolbar_button);
     }
 }
@@ -232,5 +232,55 @@ fn update_toolbar_button(
                 .into(),
             ));
         }
+    }
+}
+
+fn keyboard_toolbar(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut toolbar: ResMut<Toolbar>,
+    mut commands: Commands,
+) {
+    // TODO: This has bad code smell but it's a straightforward structure and the docs say
+    // just_pressed() runs in constant time
+    if keyboard.just_pressed(KeyCode::Digit1) {
+        commands
+            .entity(toolbar.buttons.get(toolbar.selected).unwrap().to_owned())
+            .insert(BorderColor::from(Srgba::new(0., 0., 0., 0.6)));
+        toolbar.selected = 0;
+        commands
+            .entity(toolbar.buttons.get(toolbar.selected).unwrap().to_owned())
+            .insert(BorderColor::from(Srgba::new(0., 0., 0., 1.)));
+    } else if keyboard.just_pressed(KeyCode::Digit2) {
+        commands
+            .entity(toolbar.buttons.get(toolbar.selected).unwrap().to_owned())
+            .insert(BorderColor::from(Srgba::new(0., 0., 0., 0.6)));
+        toolbar.selected = 1;
+        commands
+            .entity(toolbar.buttons.get(toolbar.selected).unwrap().to_owned())
+            .insert(BorderColor::from(Srgba::new(0., 0., 0., 1.)));
+    } else if keyboard.just_pressed(KeyCode::Digit3) {
+        commands
+            .entity(toolbar.buttons.get(toolbar.selected).unwrap().to_owned())
+            .insert(BorderColor::from(Srgba::new(0., 0., 0., 0.6)));
+        toolbar.selected = 2;
+        commands
+            .entity(toolbar.buttons.get(toolbar.selected).unwrap().to_owned())
+            .insert(BorderColor::from(Srgba::new(0., 0., 0., 1.)));
+    } else if keyboard.just_pressed(KeyCode::Digit4) {
+        commands
+            .entity(toolbar.buttons.get(toolbar.selected).unwrap().to_owned())
+            .insert(BorderColor::from(Srgba::new(0., 0., 0., 0.6)));
+        toolbar.selected = 3;
+        commands
+            .entity(toolbar.buttons.get(toolbar.selected).unwrap().to_owned())
+            .insert(BorderColor::from(Srgba::new(0., 0., 0., 1.)));
+    } else if keyboard.just_pressed(KeyCode::Digit5) {
+        commands
+            .entity(toolbar.buttons.get(toolbar.selected).unwrap().to_owned())
+            .insert(BorderColor::from(Srgba::new(0., 0., 0., 0.6)));
+        toolbar.selected = 4;
+        commands
+            .entity(toolbar.buttons.get(toolbar.selected).unwrap().to_owned())
+            .insert(BorderColor::from(Srgba::new(0., 0., 0., 1.)));
     }
 }
