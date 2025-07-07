@@ -1,5 +1,6 @@
 use bevy::{
     color::palettes::tailwind::{AMBER_700, GREEN_700, STONE_500},
+    ecs::{component::HookContext, world::DeferredWorld},
     prelude::*,
 };
 
@@ -93,8 +94,15 @@ fn build_toolbar(mut commands: Commands) {
 struct Toolbar(Vec<Entity>);
 
 #[derive(Component)]
+#[component(on_add = push_toolbar_button)]
 /// Marker component for toolbar buttons
 struct ToolbarButton;
+
+fn push_toolbar_button(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
+    if let Some(mut toolbar) = world.get_resource_mut::<Toolbar>() {
+        toolbar.0.push(entity);
+    }
+}
 
 #[derive(Bundle)]
 /// A bundle to simplify the creation of toolbar buttons with predefined properties
