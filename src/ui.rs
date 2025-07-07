@@ -98,6 +98,7 @@ pub struct Toolbar(pub Vec<Entity>);
 /// Marker component for toolbar buttons
 struct ToolbarButton;
 
+/// Component hook to register ToolbarButtons with the Toolbar Resource
 fn push_toolbar_button(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
     if let Some(mut toolbar) = world.get_resource_mut::<Toolbar>() {
         toolbar.0.push(entity);
