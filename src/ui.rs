@@ -81,13 +81,13 @@ pub struct Toolbar {
     pub selected: usize,
 }
 
-#[derive(Component)]
-#[component(on_add = push_toolbar_button)]
 /// Marker component for toolbar buttons
+#[derive(Component)]
+#[component(on_add = register_toolbar_button)]
 struct ToolbarButton;
 
 /// Component hook to register ToolbarButtons with the Toolbar Resource
-fn push_toolbar_button(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
+fn register_toolbar_button(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
     if let Some(mut toolbar) = world.get_resource_mut::<Toolbar>() {
         toolbar.buttons.push(entity);
     }
