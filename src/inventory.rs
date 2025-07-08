@@ -10,7 +10,8 @@ pub struct InventoryPlugin;
 impl Plugin for InventoryPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, handle_item_pickups)
-            .add_event::<ItemPickedUp>();
+            .add_event::<ItemPickedUp>()
+            .add_event::<ItemRemoved>();
     }
 }
 
@@ -85,4 +86,10 @@ fn handle_item_pickups(
             }
         }
     }
+}
+
+#[derive(Event)]
+pub struct ItemRemoved {
+    pub slot: usize,
+    pub amount: usize,
 }
