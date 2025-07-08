@@ -122,9 +122,13 @@ impl Default for ToolbarButtonBundle {
     }
 }
 
+#[derive(Component)]
+struct ToolbarButtonText;
+
 #[derive(Bundle)]
 /// A bundle to ease the spawning of standardized Text (item count) labels for the toolbar buttons
 struct ButtonTextLabel {
+    marker: ToolbarButtonText,
     node: Node,
     text: Text,
     text_font: TextFont,
@@ -142,6 +146,7 @@ impl ButtonTextLabel {
 impl Default for ButtonTextLabel {
     fn default() -> Self {
         ButtonTextLabel {
+            marker: ToolbarButtonText,
             node: Node {
                 grid_row: GridPlacement::start_end(1, 1),
                 grid_column: GridPlacement::start_end(1, 1),
@@ -157,9 +162,13 @@ impl Default for ButtonTextLabel {
     }
 }
 
+#[derive(Component)]
+struct ToolbarIcon;
+
 #[derive(Bundle)]
 /// A bundle to ease the spawning of standardized ImageNodes for the toolbar buttons
 struct ButtonItemIcon {
+    marker: ToolbarIcon,
     node: Node,
     image: ImageNode,
 }
@@ -175,6 +184,7 @@ impl ButtonItemIcon {
 impl Default for ButtonItemIcon {
     fn default() -> Self {
         ButtonItemIcon {
+            marker: ToolbarIcon,
             node: Node {
                 height: Val::Percent(70.),
                 width: Val::Percent(70.),
