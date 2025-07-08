@@ -239,52 +239,6 @@ impl Default for ButtonItemIcon {
     }
 }
 
-#[derive(Event)]
-/// Update a toolbar button's visual appearance to match a given ItemStack
-pub struct UpdateToolbarButton(pub Option<ItemStack>);
-
-/// Change the appearance of a toolbar button when the contents of the slot it represents change
-fn update_toolbar_button(
-    trigger: Trigger<UpdateToolbarButton>,
-    children: Query<&Children, With<ToolbarButton>>,
-    texts: Query<&Text>,
-    image_nodes: Query<&ImageNode>,
-    mut commands: Commands,
-) {
-    // Get the inventory slot data from the trigger. If the slot is empty, we can update the fields
-    // immediately and return
-    let Some(stack) = trigger.0 else {
-        commands
-            .entity(trigger.target())
-            .insert((Text::new(""), ImageNode::default()));
-        return;
-    };
-
-    // Iterate over the Children of the ToolbarButton
-    for e in children.get(trigger.target()).unwrap().iter() {
-        // Update the button text when we find it
-        if let Ok(_) = texts.get(e) {
-            commands.entity(e).insert(Text::new(match stack.count {
-                0 => "".to_owned(), // There shouldn't technically be stacks with 0 count but...
-                _ => format!("{}", stack.count),
-            }));
-        }
-
-        // Update the icon when we find it
-        if let Ok(_) = image_nodes.get(e) {
-            // Get color based on which block it is
-            commands.entity(e).insert(ImageNode::solid_color(
-                match stack.item_id {
-                    1 => AMBER_700,
-                    2 => GREEN_700,
-                    _ => STONE_500,
-                }
-                .into(),
-            ));
-        }
-    }
-}
-
 fn keyboard_toolbar(
     keyboard: Res<ButtonInput<KeyCode>>,
     mut toolbar: ResMut<Toolbar>,
