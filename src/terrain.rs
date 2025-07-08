@@ -10,7 +10,11 @@ use bevy::{
 };
 use round_to::{CeilTo, FloorTo};
 
-use crate::inventory::ItemPickedUp;
+use crate::{
+    inventory::{Inventory, ItemPickedUp, ItemRemoved},
+    player::Player,
+    ui::Toolbar,
+};
 
 pub struct TerrainPlugin;
 
@@ -151,6 +155,9 @@ fn tile_placement(
     trigger: Trigger<TilePlaced>,
     mut tiles: Query<&mut TileData>,
     mut commands: Commands,
+    inventory: Single<&Inventory, With<Player>>,
+    toolbar: Res<Toolbar>,
+    mut item_events: EventWriter<ItemRemoved>,
 ) {
     let mut tile = tiles.get_mut(trigger.target()).unwrap();
 
@@ -159,8 +166,17 @@ fn tile_placement(
         return;
     }
 
-    tile.fg_id = 1;
+    // Get the item stack currently in hand
+    let Some(stack) = inventory.0.get(toolbar.selected).unwrap() else {
+        return;
+    };
+
+    tile.fg_id = stack.item_id;
     tile.solid = true;
+    item_events.write(ItemRemoved {
+        slot: toolbar.selected,
+        amount: 1,
+    });
     commands
         .entity(trigger.target())
         .insert(Collider::rectangle(1., 1.));

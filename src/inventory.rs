@@ -21,7 +21,7 @@ impl Plugin for InventoryPlugin {
 // the three types of foreground blocks, which are all stackable. This will change in the future
 // and require more complex inventory management.
 // Option should default to None which is perfect.
-pub struct Inventory([Option<ItemStack>; 5]);
+pub struct Inventory(pub [Option<ItemStack>; 5]);
 
 // TODO: Not sure I want this to be totally public? Would have to move around the implementation
 // for the toolbar update or add functions somehow
