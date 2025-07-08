@@ -40,7 +40,7 @@ fn handle_item_pickups(
     mut inventory: Single<&mut Inventory, With<Player>>,
     toolbar: Res<Toolbar>,
 ) {
-    for event in events.read() {
+    'event: for event in events.read() {
         let mut first_empty_slot: Option<usize> = None;
         // Iterate over all inventory slots
         for i in 0..(inventory.0.len()) {
@@ -53,14 +53,14 @@ fn handle_item_pickups(
                     });
                     // Update toolbar
                     if i >= TOOLBAR_BUTTONS {
-                        continue;
+                        break 'event;
                     } else if let Some(_) = toolbar.buttons.get(i) {
                         toolbar_events.write(ToolbarSlotUpdate {
                             stack: inventory.0[i],
                             slot: i,
                         });
                     }
-                    continue;
+                    break 'event;
                 }
                 // Track the first empty inventory slot we find, if any
                 None if first_empty_slot.is_none() => first_empty_slot = Some(i),
@@ -76,7 +76,7 @@ fn handle_item_pickups(
             });
             // Update toolbar
             if i >= TOOLBAR_BUTTONS {
-                continue;
+                break;
             } else if let Some(_) = toolbar.buttons.get(i) {
                 toolbar_events.write(ToolbarSlotUpdate {
                     stack: inventory.0[i],
