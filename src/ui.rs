@@ -78,6 +78,8 @@ fn build_toolbar(mut commands: Commands) {
 #[derive(Resource, Default)]
 pub struct Toolbar {
     pub buttons: Vec<Entity>,
+    icons: Vec<Entity>,
+    text: Vec<Entity>,
     pub selected: usize,
 }
 
@@ -123,7 +125,14 @@ impl Default for ToolbarButtonBundle {
 }
 
 #[derive(Component)]
+#[component(on_add = register_button_text)]
 struct ToolbarButtonText;
+
+fn register_button_text(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
+    if let Some(mut toolbar) = world.get_resource_mut::<Toolbar>() {
+        toolbar.text.push(entity);
+    }
+}
 
 #[derive(Bundle)]
 /// A bundle to ease the spawning of standardized Text (item count) labels for the toolbar buttons
@@ -163,7 +172,14 @@ impl Default for ButtonTextLabel {
 }
 
 #[derive(Component)]
+#[component(on_add = register_button_icon)]
 struct ToolbarIcon;
+
+fn register_button_icon(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
+    if let Some(mut toolbar) = world.get_resource_mut::<Toolbar>() {
+        toolbar.icons.push(entity);
+    }
+}
 
 #[derive(Bundle)]
 /// A bundle to ease the spawning of standardized ImageNodes for the toolbar buttons
