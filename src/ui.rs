@@ -14,9 +14,12 @@ pub struct UiPlugin;
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Toolbar>()
+            .add_event::<ToolbarSlotUpdate>()
             .add_systems(Startup, (build_ui, build_toolbar))
-            .add_systems(Update, (update_coordinates_ui, keyboard_toolbar))
-            .add_observer(update_toolbar_button);
+            .add_systems(
+                Update,
+                (update_coordinates_ui, keyboard_toolbar, update_toolbar_slot),
+            );
     }
 }
 
@@ -81,6 +84,50 @@ pub struct Toolbar {
     icons: Vec<Entity>,
     text: Vec<Entity>,
     pub selected: usize,
+}
+
+#[derive(Event)]
+pub struct ToolbarSlotUpdate {
+    stack: Option<ItemStack>,
+    slot: usize,
+}
+
+fn update_toolbar_slot(
+    mut events: EventReader<ToolbarSlotUpdate>,
+    toolbar: Res<Toolbar>,
+    mut commands: Commands,
+) {
+    for e in events.read() {
+        // Try to get the icon entity and text entity from the toolbar. If we can't (e.g. somehow
+        // e.slot is higher than the actual number of toolbar slots), then skip this event.
+        let Some(icon_entity) = toolbar.icons.get(e.slot) else {
+            return;
+        };
+        let Some(text_entity) = toolbar.text.get(e.slot) else {
+            return;
+        };
+
+        // Get a color based on the item id
+        // In the future this will be more complicated
+        let image_node = match e.stack {
+            Some(s) => ImageNode::solid_color(Color::from(match s.item_id {
+                1 => AMBER_700,
+                2 => GREEN_700,
+                _ => STONE_500,
+            })),
+            None => ImageNode::default(),
+        };
+
+        // Get text from the count
+        let text = Text(match e.stack {
+            Some(s) => format!("{}", s.count),
+            None => "".to_owned(),
+        });
+
+        // Apply the new properties to the respective entities
+        commands.entity(icon_entity.to_owned()).insert(image_node);
+        commands.entity(text_entity.to_owned()).insert(text);
+    }
 }
 
 /// Marker component for toolbar buttons
