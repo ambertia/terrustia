@@ -53,14 +53,14 @@ fn handle_item_pickups(
                     });
                     // Update toolbar
                     if i >= TOOLBAR_BUTTONS {
-                        return;
+                        continue;
                     } else if let Some(_) = toolbar.buttons.get(i) {
                         toolbar_events.write(ToolbarSlotUpdate {
                             stack: inventory.0[i],
                             slot: i,
                         });
                     }
-                    return;
+                    continue;
                 }
                 // Track the first empty inventory slot we find, if any
                 None if first_empty_slot.is_none() => first_empty_slot = Some(i),
@@ -76,7 +76,7 @@ fn handle_item_pickups(
             });
             // Update toolbar
             if i >= TOOLBAR_BUTTONS {
-                return;
+                continue;
             } else if let Some(_) = toolbar.buttons.get(i) {
                 toolbar_events.write(ToolbarSlotUpdate {
                     stack: inventory.0[i],
