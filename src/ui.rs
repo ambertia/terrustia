@@ -43,39 +43,37 @@ fn build_ui(mut commands: Commands) {
 }
 
 /// Create the toolbar
-fn build_toolbar(mut commands: Commands) {
+pub const TOOLBAR_BUTTONS: usize = 5;
+fn build_toolbar(mut commands: Commands, mut toolbar: ResMut<Toolbar>) {
     let toolbar_base = Node {
         margin: UiRect::all(Val::Px(5.)),
         column_gap: Val::Px(10.),
         justify_self: JustifySelf::End,
         ..default()
     };
-    commands.spawn((
-        toolbar_base,
-        children![
-            // This is a little ugly but it works just fine
-            (
-                ToolbarButtonBundle::default(),
-                children![ButtonTextLabel::default(), ButtonItemIcon::default(),],
-            ),
-            (
-                ToolbarButtonBundle::default(),
-                children![ButtonTextLabel::default(), ButtonItemIcon::default(),],
-            ),
-            (
-                ToolbarButtonBundle::default(),
-                children![ButtonTextLabel::default(), ButtonItemIcon::default(),],
-            ),
-            (
-                ToolbarButtonBundle::default(),
-                children![ButtonTextLabel::default(), ButtonItemIcon::default(),],
-            ),
-            (
-                ToolbarButtonBundle::default(),
-                children![ButtonTextLabel::default(), ButtonItemIcon::default(),],
-            ),
-        ],
-    ));
+
+    // Vecs to use to accumulate the toolbar elements
+    let mut buttons: Vec<Entity> = Vec::new();
+    let mut icons: Vec<Entity> = Vec::new();
+    let mut texts: Vec<Entity> = Vec::new();
+
+    commands.spawn(toolbar_base).with_children(|p| {
+        for _ in 0..TOOLBAR_BUTTONS {
+            buttons.push(
+                p.spawn(ToolbarButtonBundle::default())
+                    .with_children(|p| {
+                        icons.push(p.spawn(ButtonItemIcon::default()).id());
+                        texts.push(p.spawn(ButtonTextLabel::default()).id());
+                    })
+                    .id(),
+            );
+        }
+    });
+
+    // Move the Vecs to the Resource things
+    toolbar.buttons = buttons;
+    toolbar.icons = icons;
+    toolbar.text = texts;
 }
 
 #[derive(Resource, Default)]
@@ -132,15 +130,7 @@ fn update_toolbar_slot(
 
 /// Marker component for toolbar buttons
 #[derive(Component)]
-#[component(on_add = register_toolbar_button)]
 struct ToolbarButton;
-
-/// Component hook to register ToolbarButtons with the Toolbar Resource
-fn register_toolbar_button(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
-    if let Some(mut toolbar) = world.get_resource_mut::<Toolbar>() {
-        toolbar.buttons.push(entity);
-    }
-}
 
 #[derive(Bundle)]
 /// A bundle to simplify the creation of toolbar buttons with predefined properties
@@ -173,15 +163,7 @@ impl Default for ToolbarButtonBundle {
 
 /// Marker component for the text on the toolbar buttons
 #[derive(Component)]
-#[component(on_add = register_button_text)]
 struct ToolbarButtonText;
-
-/// Component hook to register new ToolbarButtonText instances with the Toolbar Resource
-fn register_button_text(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
-    if let Some(mut toolbar) = world.get_resource_mut::<Toolbar>() {
-        toolbar.text.push(entity);
-    }
-}
 
 #[derive(Bundle)]
 /// A bundle to ease the spawning of standardized Text (item count) labels for the toolbar buttons
@@ -221,15 +203,7 @@ impl Default for ButtonTextLabel {
 }
 
 #[derive(Component)]
-#[component(on_add = register_button_icon)]
 struct ToolbarIcon;
-
-/// Component hook to register new ToolbarIcon instances with the Toolbar Resource
-fn register_button_icon(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
-    if let Some(mut toolbar) = world.get_resource_mut::<Toolbar>() {
-        toolbar.icons.push(entity);
-    }
-}
 
 #[derive(Bundle)]
 /// A bundle to ease the spawning of standardized ImageNodes for the toolbar buttons
