@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     player::Player,
-    ui::{Toolbar, UpdateToolbarButton},
+    ui::{TOOLBAR_BUTTONS, Toolbar, ToolbarSlotUpdate},
 };
 
 pub struct InventoryPlugin;
@@ -36,9 +36,9 @@ pub struct ItemPickedUp(pub usize);
 /// Process all pending ItemPickedUp events and modify the player's inventory accordingly
 fn handle_item_pickups(
     mut events: EventReader<ItemPickedUp>,
+    mut toolbar_events: EventWriter<ToolbarSlotUpdate>,
     mut inventory: Single<&mut Inventory, With<Player>>,
     toolbar: Res<Toolbar>,
-    mut commands: Commands,
 ) {
     for event in events.read() {
         let mut first_empty_slot: Option<usize> = None;
@@ -52,10 +52,13 @@ fn handle_item_pickups(
                         count: s.count + 1,
                     });
                     // Update toolbar
-                    if let Some(b) = toolbar.buttons.get(i) {
-                        commands
-                            .entity(b.to_owned())
-                            .trigger(UpdateToolbarButton(inventory.0[i]));
+                    if i >= TOOLBAR_BUTTONS {
+                        return;
+                    } else if let Some(_) = toolbar.buttons.get(i) {
+                        toolbar_events.write(ToolbarSlotUpdate {
+                            stack: inventory.0[i],
+                            slot: i,
+                        });
                     }
                     return;
                 }
@@ -72,10 +75,13 @@ fn handle_item_pickups(
                 count: 1,
             });
             // Update toolbar
-            if let Some(b) = toolbar.buttons.get(i) {
-                commands
-                    .entity(b.to_owned())
-                    .trigger(UpdateToolbarButton(inventory.0[i]));
+            if i >= TOOLBAR_BUTTONS {
+                return;
+            } else if let Some(_) = toolbar.buttons.get(i) {
+                toolbar_events.write(ToolbarSlotUpdate {
+                    stack: inventory.0[i],
+                    slot: i,
+                });
             }
         }
     }

@@ -85,8 +85,8 @@ pub struct Toolbar {
 
 #[derive(Event)]
 pub struct ToolbarSlotUpdate {
-    stack: Option<ItemStack>,
-    slot: usize,
+    pub stack: Option<ItemStack>,
+    pub slot: usize,
 }
 
 fn update_toolbar_slot(
