@@ -1,6 +1,5 @@
 use bevy::{
     color::palettes::tailwind::{AMBER_700, GREEN_700, STONE_500},
-    ecs::{component::HookContext, world::DeferredWorld},
     prelude::*,
 };
 
