@@ -9,7 +9,7 @@ pub struct InventoryPlugin;
 
 impl Plugin for InventoryPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, handle_item_pickups)
+        app.add_systems(Update, (handle_item_pickups, handle_item_removals))
             .add_event::<ItemPickedUp>()
             .add_event::<ItemRemoved>();
     }
@@ -92,4 +92,41 @@ fn handle_item_pickups(
 pub struct ItemRemoved {
     pub slot: usize,
     pub amount: usize,
+}
+
+/// Handle removing items from the inventory
+fn handle_item_removals(
+    mut events: EventReader<ItemRemoved>,
+    mut toolbar_events: EventWriter<ToolbarSlotUpdate>,
+    mut inventory: Single<&mut Inventory, With<Player>>,
+) {
+    for e in events.read() {
+        // Get the inventory item stack indicated by the event
+        // This let-else just checks that the inventory slot actually exists, not whether or not
+        // something is in it.
+        let Some(stack) = inventory.0.get(e.slot) else {
+            return;
+        };
+
+        // If there is an item stack, determine what the new slot state should be and take action
+        let new_stack = match stack {
+            // If there are enough items to subtract with at least 1 left, do so
+            Some(s) if s.count > e.amount => Some(ItemStack {
+                item_id: s.item_id,
+                count: s.count - e.amount,
+            }),
+            // If there isn't enough in the stack or no stack in the first place, return None
+            _ => None,
+        };
+
+        // Assign the stack data to the inventory slot, and write an event if the toolbar needs to
+        // be updated
+        inventory.0[e.slot] = new_stack;
+        if e.slot < TOOLBAR_BUTTONS {
+            toolbar_events.write(ToolbarSlotUpdate {
+                stack: new_stack,
+                slot: e.slot,
+            });
+        }
+    }
 }
