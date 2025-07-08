@@ -171,10 +171,12 @@ impl Default for ToolbarButtonBundle {
     }
 }
 
+/// Marker component for the text on the toolbar buttons
 #[derive(Component)]
 #[component(on_add = register_button_text)]
 struct ToolbarButtonText;
 
+/// Component hook to register new ToolbarButtonText instances with the Toolbar Resource
 fn register_button_text(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
     if let Some(mut toolbar) = world.get_resource_mut::<Toolbar>() {
         toolbar.text.push(entity);
@@ -222,6 +224,7 @@ impl Default for ButtonTextLabel {
 #[component(on_add = register_button_icon)]
 struct ToolbarIcon;
 
+/// Component hook to register new ToolbarIcon instances with the Toolbar Resource
 fn register_button_icon(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
     if let Some(mut toolbar) = world.get_resource_mut::<Toolbar>() {
         toolbar.icons.push(entity);
