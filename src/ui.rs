@@ -201,6 +201,7 @@ impl Default for ButtonTextLabel {
     }
 }
 
+/// Marker component for the ImageNode on toolbar buttons
 #[derive(Component)]
 struct ToolbarIcon;
 
