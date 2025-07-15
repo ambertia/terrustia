@@ -59,3 +59,74 @@ fn generate_terrain_offsets() -> Vec<i16> {
     }
     ground_offsets
 }
+
+/// How far above "ground level" the sky goes
+const SKY_HEIGHT: i16 = 10;
+/// How thick the layer of grass and dirt above the stone is
+const DIRT_THICKNESS: i16 = 5;
+/// Construct basic terrain map data by taking into account random terrain offset
+fn rasterize_canvas(offsets: Vec<i16>) -> Result<HashMap<(i16, i16), TileData>, Box<dyn Error>> {
+    // Safety checks
+    // There have to be enough offsets for the size of the map; this shouldn't ever happen but it
+    // would be a problem if it did.
+    if offsets.len() < MAP_WIDTH {
+        return Err(TerrainGenerationError(format!(
+            "Offsets length {} is insufficent for map width {}",
+            offsets.len(),
+            MAP_WIDTH
+        ))
+        .into());
+    }
+
+    // Basic parameters to use later
+    let right_edge: i16 = i16::try_from(MAP_WIDTH)? / 2;
+    let left_edge: i16 = right_edge - i16::try_from(MAP_WIDTH)?;
+    let bottom_edge: i16 = SKY_HEIGHT - i16::try_from(MAP_HEIGHT)? + 1;
+
+    // Initialize the HashMap for block data. TileData will Default to an air block
+    let mut map_data: HashMap<(i16, i16), TileData> =
+        HashMap::with_capacity(MAP_WIDTH * MAP_HEIGHT);
+
+    // Iterate over the map lengthwise
+    for x in left_edge..=right_edge {
+        // Determine the y-location of the grass block at the surface
+        // Offsets Vec is 0-indexed, which makes this more complicated
+        let level = offsets[usize::try_from(x + left_edge)?];
+
+        // Insert the dirt block at (x, level)
+        map_data.insert(
+            (x, level),
+            TileData {
+                fg_id: 2,
+                bg_id: 1,
+                solid: true,
+            },
+        );
+
+        // Insert dirt tiles underneath the grass block until DIRT_THICKNESS tiles have been placed
+        for y in (level - DIRT_THICKNESS)..level {
+            map_data.insert(
+                (x, y),
+                TileData {
+                    fg_id: 1,
+                    bg_id: 1,
+                    solid: true,
+                },
+            );
+        }
+
+        // Insert stone tiles from the bottom of the map to the dirt layer
+        for y in bottom_edge..(level - DIRT_THICKNESS) {
+            map_data.insert(
+                (x, y),
+                TileData {
+                    fg_id: 3,
+                    bg_id: 3,
+                    solid: true,
+                },
+            );
+        }
+    }
+
+    Ok(map_data)
+}
