@@ -17,7 +17,7 @@ impl Plugin for TerrustiaGamePlugin {
             camera::CameraPlugin,
             inventory::InventoryPlugin,
             player::CharacterControllerPlugin,
-            terrain::TerrainPlugin,
+            terrain::handling::TerrainPlugin,
             ui::UiPlugin,
         ))
         .insert_resource(ClearColor(Color::BLACK))
