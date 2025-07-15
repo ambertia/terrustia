@@ -1,9 +1,23 @@
+use std::{error::Error, fmt::{self, Formatter}};
 use bevy::{platform::collections::HashMap, prelude::*};
 
 use super::{GameMap, TileData};
 
 const MAP_WIDTH: usize = 200;
 const MAP_HEIGHT: usize = 30;
+
+/// Custom error type implementing Error which wraps a String message
+// TODO: I could probably just use the simple_error crate for this, but it's fine for use here
+#[derive(Debug)]
+struct TerrainGenerationError(String);
+
+impl fmt::Display for TerrainGenerationError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl Error for TerrainGenerationError {}
 
 /// Probability of the terrain shifting height each tile
 const SHIFT_CHANCE: f64 = 0.125;
