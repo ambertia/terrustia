@@ -1,4 +1,6 @@
-use std::{error::Error, fmt::{self, Formatter}};
+use std::fmt;
+use std::{error::Error, fmt::Formatter};
+
 use bevy::{platform::collections::HashMap, prelude::*};
 
 use super::{GameMap, TileData};
