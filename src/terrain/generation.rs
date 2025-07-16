@@ -1,4 +1,5 @@
 use std::{
+    cmp::{max, min},
     collections::VecDeque,
     error::Error,
     fmt::{self, Formatter},
@@ -155,6 +156,15 @@ impl HillParameters {
             height: rand::random_range(HILL_MIN_HEIGHT..=HILL_MAX_HEIGHT),
             width: rand::random_range(HILL_MIN_WIDTH..=HILL_MAX_WIDTH),
         }
+    }
+
+    /// Calculate the overlap between this hill and another hill. Positive values indicate overlap,
+    /// while negative values indicate a gap.
+    fn get_overlap(&self, other: HillParameters) -> i16 {
+        // Find the right-most left edge and left-most right edge
+        let left_bound = max(self.x - (self.width / 2), other.x - (other.width / 2));
+        let right_bound = min(self.x + (self.width / 2), other.x + (other.width / 2));
+        right_bound - left_bound
     }
 }
 
