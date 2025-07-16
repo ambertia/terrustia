@@ -1,6 +1,8 @@
-use std::collections::VecDeque;
-use std::fmt;
-use std::{error::Error, fmt::Formatter};
+use std::{
+    collections::VecDeque,
+    error::Error,
+    fmt::{self, Formatter},
+};
 
 use avian2d::prelude::*;
 use bevy::{platform::collections::HashMap, prelude::*};
