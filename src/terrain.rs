@@ -25,14 +25,13 @@ impl Plugin for TerrainPlugin {
         app.init_resource::<GameMap>()
             .add_observer(tile_destruction)
             .add_observer(tile_placement)
-            .add_systems(Startup, build_terrain)
             .add_systems(FixedUpdate, tile_interaction)
             .add_systems(Update, (tile_sprite_updates, tile_breaking_effect));
     }
 }
 
 /// Resource to associate tile entities in the ECS with map coordinates
-#[derive(Resource, Default)]
+#[derive(Resource)]
 pub struct GameMap(HashMap<(i16, i16), Entity>);
 
 impl GameMap {
