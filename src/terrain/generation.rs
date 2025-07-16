@@ -5,8 +5,8 @@ use bevy::{platform::collections::HashMap, prelude::*};
 
 use super::{GameMap, TileData};
 
-const MAP_WIDTH: usize = 200;
-const MAP_HEIGHT: usize = 30;
+const MAP_WIDTH: i16 = 200;
+const MAP_HEIGHT: i16 = 40;
 
 /// Custom error type implementing Error which wraps a String message
 // TODO: I could probably just use the simple_error crate for this, but it's fine for use here
