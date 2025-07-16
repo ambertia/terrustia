@@ -101,7 +101,7 @@ const SHIFT_LIMITER: i16 = 4;
 fn generate_terrain_offsets() -> Result<VecDeque<i16>, BevyError> {
     let mut ground_offsets: VecDeque<i16> = VecDeque::with_capacity(MAP_WIDTH.try_into()?);
     let mut running_offset: i16 = rand::random_range(-SHIFT_LIMITER..=SHIFT_LIMITER);
-    ground_offsets[0] = running_offset;
+    ground_offsets.push_back(running_offset);
 
     // Iterate across the map
     for _ in 1..MAP_WIDTH {
@@ -138,7 +138,7 @@ const SKY_HEIGHT: i16 = 10;
 const DIRT_THICKNESS: i16 = 5;
 /// Construct basic terrain map data by taking into account random terrain offset
 fn rasterize_canvas(
-    offsets: VecDeque<i16>,
+    mut offsets: VecDeque<i16>,
     params: &MapParameters,
 ) -> Result<HashMap<(i16, i16), TileData>, BevyError> {
     // Safety checks
@@ -161,7 +161,7 @@ fn rasterize_canvas(
     for x in params.left_edge..=params.right_edge {
         // Determine the y-location of the grass block at the surface
         // Offsets Vec is 0-indexed, which makes this more complicated
-        let level = offsets[usize::try_from(x + params.left_edge)?];
+        let level = offsets.pop_front().unwrap_or_default();
 
         // Insert the dirt block at (x, level)
         map_data.insert(
