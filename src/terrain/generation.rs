@@ -6,8 +6,8 @@ use bevy::{platform::collections::HashMap, prelude::*};
 
 use super::{GameMap, TileData};
 
-const MAP_WIDTH: i16 = 200;
-const MAP_HEIGHT: i16 = 40;
+const MAP_WIDTH: usize = 200;
+const MAP_HEIGHT: usize = 40;
 
 /// Custom error type implementing Error which wraps a String message
 // TODO: I could probably just use the simple_error crate for this, but it's fine for use here
@@ -79,14 +79,9 @@ fn rasterize_canvas(offsets: Vec<i16>) -> Result<HashMap<(i16, i16), TileData>, 
         .into());
     }
 
-    // Basic parameters to use later
-    let right_edge: i16 = i16::try_from(MAP_WIDTH)? / 2;
-    let left_edge: i16 = right_edge - i16::try_from(MAP_WIDTH)?;
-    let bottom_edge: i16 = SKY_HEIGHT - i16::try_from(MAP_HEIGHT)? + 1;
-
     // Initialize the HashMap for block data. TileData will Default to an air block
     let mut map_data: HashMap<(i16, i16), TileData> =
-        HashMap::with_capacity(MAP_WIDTH * MAP_HEIGHT);
+        HashMap::with_capacity((MAP_WIDTH * MAP_HEIGHT).try_into()?);
 
     // Iterate over the map lengthwise
     for x in left_edge..=right_edge {
