@@ -134,6 +134,30 @@ fn generate_terrain_offsets() -> Result<VecDeque<i16>, BevyError> {
     Ok(ground_offsets)
 }
 
+struct HillParameters {
+    x: i16,
+    height: i16,
+    width: i16,
+}
+
+const HILL_MAX_WIDTH: i16 = 20;
+const HILL_MIN_WIDTH: i16 = 5;
+const HILL_MAX_HEIGHT: i16 = 10;
+const HILL_MIN_HEIGHT: i16 = 5;
+const HILL_MAP_EDGE_MARGIN: i16 = 10;
+impl HillParameters {
+    fn new(params: MapParameters) -> Self {
+        HillParameters {
+            x: rand::random_range(
+                (params.left_edge + HILL_MAP_EDGE_MARGIN)
+                    ..=(params.right_edge - HILL_MAP_EDGE_MARGIN),
+            ),
+            height: rand::random_range(HILL_MIN_HEIGHT..=HILL_MAX_HEIGHT),
+            width: rand::random_range(HILL_MIN_WIDTH..=HILL_MAX_WIDTH),
+        }
+    }
+}
+
 /// How far above "ground level" the sky goes
 const SKY_HEIGHT: i16 = 15;
 /// How thick the layer of grass and dirt above the stone is
