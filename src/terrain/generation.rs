@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 use std::fmt;
 use std::{error::Error, fmt::Formatter};
 
+use avian2d::prelude::*;
 use bevy::{platform::collections::HashMap, prelude::*};
 
 use super::{GameMap, TileData};
@@ -24,6 +25,58 @@ impl Default for MapParameters {
             top_edge: SKY_HEIGHT,
             bottom_edge: SKY_HEIGHT - i16::try_from(MAP_HEIGHT).unwrap() + 1,
         }
+    }
+}
+
+impl FromWorld for GameMap {
+    fn from_world(world: &mut World) -> Self {
+        let map_params = MapParameters::default();
+
+        let ground_offsets = match generate_terrain_offsets() {
+            Ok(o) => o,
+            Err(_) => VecDeque::from([0; MAP_WIDTH]),
+        };
+
+        // Bake the parameters into real TileData
+        let tile_data =
+            rasterize_canvas(ground_offsets, &map_params).expect("Failed to rasterize map canvas");
+
+        let mut game_map: HashMap<(i16, i16), Entity> = HashMap::new();
+        // Spawn the tiles here and add them to game_map
+        for x in map_params.left_edge..=map_params.right_edge {
+            for y in map_params.bottom_edge..=map_params.top_edge {
+                // Retreive this tile's data from the final collection or default it
+                let data = match tile_data.get(&(x, y)) {
+                    Some(td) => td,
+                    None => &TileData::default(),
+                };
+
+                // The presence of a collider depends on whether or not the tile is solid
+                let collider = match data.solid {
+                    true => Some(Collider::rectangle(1., 1.)),
+                    false => None,
+                };
+
+                // Spawn the tile entity and store its id in a variable
+                let tile_entity = world
+                    .commands()
+                    .spawn((
+                        data.to_owned(),
+                        RigidBody::Static,
+                        Sprite::default(),
+                        Transform::from_xyz(f32::from(x) + 0.5, f32::from(y) - 0.5, -1.),
+                    ))
+                    .id();
+
+                // Attach the collider if it exists
+                if let Some(c) = collider {
+                    world.commands().entity(tile_entity).insert(c);
+                }
+
+                game_map.insert((x, y), tile_entity);
+            }
+        }
+        GameMap(game_map)
     }
 }
 
