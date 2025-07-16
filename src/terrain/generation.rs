@@ -8,7 +8,7 @@ use bevy::{platform::collections::HashMap, prelude::*};
 use super::{GameMap, TileData};
 
 const MAP_WIDTH: usize = 200;
-const MAP_HEIGHT: usize = 40;
+const MAP_HEIGHT: usize = 50;
 
 struct MapParameters {
     right_edge: i16,
@@ -133,7 +133,7 @@ fn generate_terrain_offsets() -> Result<VecDeque<i16>, BevyError> {
 }
 
 /// How far above "ground level" the sky goes
-const SKY_HEIGHT: i16 = 10;
+const SKY_HEIGHT: i16 = 15;
 /// How thick the layer of grass and dirt above the stone is
 const DIRT_THICKNESS: i16 = 5;
 /// Construct basic terrain map data by taking into account random terrain offset
