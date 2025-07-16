@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::fmt;
 use std::{error::Error, fmt::Formatter};
 
@@ -26,16 +27,16 @@ const SHIFT_CHANCE: f64 = 0.125;
 /// Maximum displacement from ground level; i.e. 4 -> Ground varies from -4 to 4
 const SHIFT_LIMITER: i16 = 4;
 /// Generate a Vec containing the random offsets to ground height level
-fn generate_terrain_offsets() -> Vec<i16> {
-    let mut ground_offsets: Vec<i16> = Vec::with_capacity(MAP_WIDTH);
+fn generate_terrain_offsets() -> Result<VecDeque<i16>, BevyError> {
+    let mut ground_offsets: VecDeque<i16> = VecDeque::with_capacity(MAP_WIDTH.try_into()?);
     let mut running_offset: i16 = rand::random_range(-SHIFT_LIMITER..=SHIFT_LIMITER);
     ground_offsets[0] = running_offset;
 
     // Iterate across the map
-    for i in 1..MAP_WIDTH {
+    for _ in 1..MAP_WIDTH {
         // Only once every SHIFT_INTERVAL blocks on average should the terrain height shift
         if !rand::random_bool(SHIFT_CHANCE) {
-            ground_offsets[i] = running_offset;
+            ground_offsets.push_back(running_offset);
             continue;
         }
 
@@ -54,10 +55,10 @@ fn generate_terrain_offsets() -> Vec<i16> {
         // generally be necessary)
         running_offset = running_offset.clamp(-SHIFT_LIMITER, SHIFT_LIMITER);
 
-        // Assign to the current index
-        ground_offsets[i] = running_offset
+        // Push this value to the VecDeque
+        ground_offsets.push_back(running_offset);
     }
-    ground_offsets
+    Ok(ground_offsets)
 }
 
 /// How far above "ground level" the sky goes
