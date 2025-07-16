@@ -16,6 +16,17 @@ struct MapParameters {
     bottom_edge: i16,
 }
 
+impl Default for MapParameters {
+    fn default() -> Self {
+        MapParameters {
+            right_edge: i16::try_from(MAP_WIDTH / 2).unwrap(),
+            left_edge: -i16::try_from(MAP_WIDTH / 2).unwrap() - 1,
+            top_edge: SKY_HEIGHT,
+            bottom_edge: SKY_HEIGHT - i16::try_from(MAP_HEIGHT).unwrap() + 1,
+        }
+    }
+}
+
 /// Custom error type implementing Error which wraps a String message
 // TODO: I could probably just use the simple_error crate for this, but it's fine for use here
 #[derive(Debug)]
