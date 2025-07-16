@@ -66,7 +66,7 @@ const SKY_HEIGHT: i16 = 10;
 /// How thick the layer of grass and dirt above the stone is
 const DIRT_THICKNESS: i16 = 5;
 /// Construct basic terrain map data by taking into account random terrain offset
-fn rasterize_canvas(offsets: Vec<i16>) -> Result<HashMap<(i16, i16), TileData>, Box<dyn Error>> {
+fn rasterize_canvas(offsets: VecDeque<i16>) -> Result<HashMap<(i16, i16), TileData>, BevyError> {
     // Safety checks
     // There have to be enough offsets for the size of the map; this shouldn't ever happen but it
     // would be a problem if it did.
