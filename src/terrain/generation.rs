@@ -160,7 +160,7 @@ impl HillParameters {
 
     /// Calculate the overlap between this hill and another hill. Positive values indicate overlap,
     /// while negative values indicate a gap.
-    fn get_overlap(&self, other: HillParameters) -> i16 {
+    fn get_overlap(&self, other: &HillParameters) -> i16 {
         // Find the right-most left edge and left-most right edge
         let left_bound = max(self.x - (self.width / 2), other.x - (other.width / 2));
         let right_bound = min(self.x + (self.width / 2), other.x + (other.width / 2));
