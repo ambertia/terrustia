@@ -135,6 +135,7 @@ fn generate_terrain_offsets() -> Result<VecDeque<i16>, BevyError> {
     Ok(ground_offsets)
 }
 
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct HillParameters {
     x: i16,
     height: i16,
@@ -166,6 +167,32 @@ impl HillParameters {
         let right_bound = min(self.x + (self.width / 2), other.x + (other.width / 2));
         right_bound - left_bound
     }
+}
+
+const HILL_MAX_OVERLAP: i16 = 10;
+const WIDTH_PER_HILL: usize = 50;
+/// Randomly generate hills
+fn generate_hills(params: &MapParameters) -> Vec<HillParameters> {
+    let hill_count = MAP_WIDTH / WIDTH_PER_HILL;
+    let mut hills: Vec<HillParameters> = Vec::new();
+    // This loop can O(n^2) relative to hill_count since it checks each new hill against each
+    // existing hill at least once, possibly multiple times per new hill if it has to try again.
+    'generation: while hills.len() < hill_count {
+        // Generate a hill
+        let new_hill = HillParameters::new(params);
+        // Check it against all the existing hills
+        for hill in hills.clone() {
+            // If the new hill has unacceptable overlap with any hill, try a new one
+            if new_hill.get_overlap(&hill) > HILL_MAX_OVERLAP {
+                continue 'generation;
+            }
+        }
+        // If this hill is compatible with all the others, push it to the Vec
+        hills.push(new_hill);
+    }
+    // Sort the Vec left-to-right and return
+    hills.sort();
+    hills
 }
 
 /// How far above "ground level" the sky goes
