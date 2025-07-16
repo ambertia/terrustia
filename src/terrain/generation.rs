@@ -146,7 +146,7 @@ const HILL_MAX_HEIGHT: i16 = 10;
 const HILL_MIN_HEIGHT: i16 = 5;
 const HILL_MAP_EDGE_MARGIN: i16 = 10;
 impl HillParameters {
-    fn new(params: MapParameters) -> Self {
+    fn new(params: &MapParameters) -> Self {
         HillParameters {
             x: rand::random_range(
                 (params.left_edge + HILL_MAP_EDGE_MARGIN)
