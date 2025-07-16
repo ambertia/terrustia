@@ -84,7 +84,10 @@ const SKY_HEIGHT: i16 = 10;
 /// How thick the layer of grass and dirt above the stone is
 const DIRT_THICKNESS: i16 = 5;
 /// Construct basic terrain map data by taking into account random terrain offset
-fn rasterize_canvas(offsets: VecDeque<i16>) -> Result<HashMap<(i16, i16), TileData>, BevyError> {
+fn rasterize_canvas(
+    offsets: VecDeque<i16>,
+    params: &MapParameters,
+) -> Result<HashMap<(i16, i16), TileData>, BevyError> {
     // Safety checks
     // There have to be enough offsets for the size of the map; this shouldn't ever happen but it
     // would be a problem if it did.
@@ -102,10 +105,10 @@ fn rasterize_canvas(offsets: VecDeque<i16>) -> Result<HashMap<(i16, i16), TileDa
         HashMap::with_capacity((MAP_WIDTH * MAP_HEIGHT).try_into()?);
 
     // Iterate over the map lengthwise
-    for x in left_edge..=right_edge {
+    for x in params.left_edge..=params.right_edge {
         // Determine the y-location of the grass block at the surface
         // Offsets Vec is 0-indexed, which makes this more complicated
-        let level = offsets[usize::try_from(x + left_edge)?];
+        let level = offsets[usize::try_from(x + params.left_edge)?];
 
         // Insert the dirt block at (x, level)
         map_data.insert(
@@ -130,7 +133,7 @@ fn rasterize_canvas(offsets: VecDeque<i16>) -> Result<HashMap<(i16, i16), TileDa
         }
 
         // Insert stone tiles from the bottom of the map to the dirt layer
-        for y in bottom_edge..(level - DIRT_THICKNESS) {
+        for y in params.bottom_edge..(level - DIRT_THICKNESS) {
             map_data.insert(
                 (x, y),
                 TileData {
