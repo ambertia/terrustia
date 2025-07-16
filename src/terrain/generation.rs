@@ -9,6 +9,13 @@ use super::{GameMap, TileData};
 const MAP_WIDTH: usize = 200;
 const MAP_HEIGHT: usize = 40;
 
+struct MapParameters {
+    right_edge: i16,
+    left_edge: i16,
+    top_edge: i16,
+    bottom_edge: i16,
+}
+
 /// Custom error type implementing Error which wraps a String message
 // TODO: I could probably just use the simple_error crate for this, but it's fine for use here
 #[derive(Debug)]
