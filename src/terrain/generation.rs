@@ -146,8 +146,8 @@ struct HillParameters {
     width: i16,
 }
 
-const HILL_MAX_WIDTH: i16 = 20;
-const HILL_MIN_WIDTH: i16 = 5;
+const HILL_MAX_WIDTH: i16 = 40;
+const HILL_MIN_WIDTH: i16 = 20;
 const HILL_MAX_HEIGHT: i16 = 10;
 const HILL_MIN_HEIGHT: i16 = 5;
 const HILL_MAP_EDGE_MARGIN: i16 = 10;
