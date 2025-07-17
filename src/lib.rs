@@ -1,6 +1,8 @@
+use assets::TileAssets;
 use avian2d::prelude::*;
 use bevy::prelude::*;
 
+mod assets;
 mod camera;
 mod inventory;
 mod player;
@@ -21,6 +23,7 @@ impl Plugin for TerrustiaGamePlugin {
             ui::UiPlugin,
         ))
         .insert_resource(ClearColor(Color::BLACK))
-        .insert_resource(Gravity(Vec2::NEG_Y * 50.));
+        .insert_resource(Gravity(Vec2::NEG_Y * 50.))
+        .init_resource::<TileAssets>();
     }
 }
