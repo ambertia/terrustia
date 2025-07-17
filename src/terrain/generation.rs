@@ -185,15 +185,18 @@ impl HillParameters {
 
 const HILL_MAX_OVERLAP: i16 = 10;
 const WIDTH_PER_HILL: usize = 50;
+const MAX_ATTEMPTS: usize = 50;
 /// Randomly generate hills
 fn generate_hills(params: &MapParameters) -> Vec<HillParameters> {
     let hill_count = MAP_WIDTH / WIDTH_PER_HILL;
     let mut hills: Vec<HillParameters> = Vec::new();
+    let mut attempts: usize = 0;
     // This loop can O(n^2) relative to hill_count since it checks each new hill against each
     // existing hill at least once, possibly multiple times per new hill if it has to try again.
-    'generation: while hills.len() < hill_count {
+    'generation: while hills.len() < hill_count && attempts < MAX_ATTEMPTS {
         // Generate a hill
         let new_hill = HillParameters::new(params);
+        attempts += 1;
         // Check it against all the existing hills
         for hill in hills.clone() {
             // If the new hill has unacceptable overlap with any hill, try a new one
