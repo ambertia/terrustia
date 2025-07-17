@@ -249,7 +249,7 @@ fn build_terrain(mut game_map: ResMut<GameMap>, mut commands: Commands) {
                 .spawn((
                     tile_data,
                     RigidBody::Static,
-                    Sprite::default(),
+                    Sprite::sized(Vec2::new(1., 1.)),
                     Transform::from_xyz(f32::from(i) + 0.5, f32::from(j) - 0.5, -1.),
                 ))
                 .id();
