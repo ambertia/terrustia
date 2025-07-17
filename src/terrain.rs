@@ -11,6 +11,7 @@ use bevy::{
 use round_to::{CeilTo, FloorTo};
 
 use crate::{
+    assets::TileAssets,
     inventory::{Inventory, ItemPickedUp, ItemRemoved},
     player::Player,
     ui::Toolbar,
@@ -183,25 +184,13 @@ fn tile_placement(
 }
 
 /// Modify the Sprites of Entities with TileData Components that were just spawned or modified
-fn tile_sprite_updates(tiles: Query<(&TileData, &mut Sprite), Changed<TileData>>) {
-    // TODO: The color picking by ID is only going to get worse
+fn tile_sprite_updates(
+    tiles: Query<(&TileData, &mut Sprite), Changed<TileData>>,
+    textures: Res<TileAssets>,
+) {
     for tile in tiles {
         let (tile_data, mut sprite) = tile;
-        if tile_data.fg_id == 0 {
-            if tile_data.bg_id == 0 {
-                sprite.color = Color::from(CYAN_400);
-            } else if tile_data.bg_id == 1 {
-                sprite.color = Color::from(AMBER_900);
-            } else {
-                sprite.color = Color::from(STONE_700);
-            }
-        } else if tile_data.fg_id == 1 {
-            sprite.color = Color::from(AMBER_700);
-        } else if tile_data.fg_id == 2 {
-            sprite.color = Color::from(GREEN_700);
-        } else {
-            sprite.color = Color::from(STONE_500);
-        }
+        sprite.image = textures.handles.get(tile_data.fg_id).unwrap().clone();
     }
 }
 
