@@ -88,7 +88,7 @@ impl FromWorld for GameMap {
 }
 
 /// Custom error type implementing Error which wraps a String message
-// TODO: I could probably just use the simple_error crate for this, but it's fine for use here
+// NOTE: I could probably just use the simple_error crate for this, but it's fine for use here
 #[derive(Debug)]
 struct TerrainGenerationError(String);
 
@@ -152,6 +152,7 @@ const HILL_MAX_HEIGHT: i16 = 10;
 const HILL_MIN_HEIGHT: i16 = 5;
 const HILL_MAP_EDGE_MARGIN: i16 = 10;
 impl HillParameters {
+    /// Randomly generate a new hill with const-defined constraints
     fn new(params: &MapParameters) -> Self {
         HillParameters {
             x: rand::random_range(
