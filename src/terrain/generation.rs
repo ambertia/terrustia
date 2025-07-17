@@ -35,14 +35,18 @@ impl FromWorld for GameMap {
     fn from_world(world: &mut World) -> Self {
         let map_params = MapParameters::default();
 
+        // Generate random terrain offsets
         let ground_offsets = match generate_terrain_offsets() {
             Ok(o) => o,
             Err(_) => VecDeque::from([0; MAP_WIDTH]),
         };
 
+        // Generate random hills
+        let hills = generate_hills(&map_params);
+
         // Bake the parameters into real TileData
-        let tile_data =
-            rasterize_canvas(ground_offsets, &map_params).expect("Failed to rasterize map canvas");
+        let tile_data = rasterize_canvas(&map_params, ground_offsets, &hills)
+            .expect("Failed to rasterize map canvas");
 
         let mut game_map: HashMap<(i16, i16), Entity> = HashMap::new();
         // Spawn the tiles here and add them to game_map
@@ -210,8 +214,9 @@ const SKY_HEIGHT: i16 = 15;
 const DIRT_THICKNESS: i16 = 5;
 /// Construct basic terrain map data by taking into account random terrain offset
 fn rasterize_canvas(
-    mut offsets: VecDeque<i16>,
     params: &MapParameters,
+    mut offsets: VecDeque<i16>,
+    hills: &Vec<HillParameters>,
 ) -> Result<HashMap<(i16, i16), TileData>, BevyError> {
     // Safety checks
     // There have to be enough offsets for the size of the map; this shouldn't ever happen but it
@@ -232,8 +237,13 @@ fn rasterize_canvas(
     // Iterate over the map lengthwise
     for x in params.left_edge..=params.right_edge {
         // Determine the y-location of the grass block at the surface
-        // Offsets Vec is 0-indexed, which makes this more complicated
-        let level = offsets.pop_front().unwrap_or_default();
+        // Get the random terrain offset
+        let mut level = offsets.pop_front().unwrap_or_default();
+
+        // Get the terrain offset due to hills at this location
+        for hill in hills {
+            level += hill.height_at(x);
+        }
 
         // Insert the dirt block at (x, level)
         map_data.insert(
