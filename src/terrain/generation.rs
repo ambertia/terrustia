@@ -167,6 +167,15 @@ impl HillParameters {
         let right_bound = min(self.x + (self.width / 2), other.x + (other.width / 2));
         right_bound - left_bound
     }
+
+    // Calculate the additional height provided by the hill at a given x-coordinate
+    fn height_at(&self, x: i16) -> i16 {
+        // Right now all hills are assumed to be triangular
+        // Determine how far towards the the triangle's bottom corner this x-value is (symmetric)
+        let dist_from_center = (self.x - x).abs();
+        let height_raw = self.height - (self.height * dist_from_center / self.width);
+        height_raw.clamp(0, self.height - 1)
+    }
 }
 
 const HILL_MAX_OVERLAP: i16 = 10;
