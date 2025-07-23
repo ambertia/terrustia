@@ -13,6 +13,7 @@ use super::{GameMap, TileData};
 const MAP_WIDTH: usize = 200;
 const MAP_HEIGHT: usize = 50;
 
+/// A struct containing map generation metadata
 struct MapParameters {
     right_edge: i16,
     left_edge: i16,
@@ -20,6 +21,7 @@ struct MapParameters {
     bottom_edge: i16,
 }
 
+// This takes some file constants and bakes them into map metadata
 impl Default for MapParameters {
     fn default() -> Self {
         MapParameters {
@@ -31,28 +33,40 @@ impl Default for MapParameters {
     }
 }
 
+// This is where the high-level terrain generation control happens
 impl FromWorld for GameMap {
     fn from_world(world: &mut World) -> Self {
+        // Build a default of the map metadata struct
         let map_params = MapParameters::default();
 
-        // Generate random terrain offsets
+        // There are two structures that affect the level of the ground and are necessary during
+        // the "additive" phase of map generation - these are the "terrain offsets" and hills
+
+        // Ground offsets are just a random variation intended to add subtle noise. If the method
+        // fails, just default to all zeroes.
         let ground_offsets = match generate_terrain_offsets() {
             Ok(o) => o,
             Err(_) => VecDeque::from([0; MAP_WIDTH]),
         };
 
-        // Generate random hills
+        // Hills are geometric structures with width and height parameters
         let hills = generate_hills(&map_params);
 
-        // Bake the parameters into real TileData
+        // Bake everything we have so far into real block data
         let tile_data = rasterize_canvas(&map_params, ground_offsets, &hills)
             .expect("Failed to rasterize map canvas");
 
+        // TODO: This is where the subtractive phase of terrain generation should occur, modifying
+        // the raw block data in tile_data
+
+        // Initialize the data structure for the GameMap resource itself once all the raw data is
+        // done being modified
         let mut game_map: HashMap<(i16, i16), Entity> = HashMap::new();
-        // Spawn the tiles here and add them to game_map
+
+        // Spawn tile entities here, while registering them in game_map
         for x in map_params.left_edge..=map_params.right_edge {
             for y in map_params.bottom_edge..=map_params.top_edge {
-                // Retreive this tile's data from the final collection or default it
+                // Retreive this tile's data from the baked data or default it for air blocks
                 let data = match tile_data.get(&(x, y)) {
                     Some(td) => td,
                     None => &TileData::default(),
@@ -75,11 +89,12 @@ impl FromWorld for GameMap {
                     ))
                     .id();
 
-                // Attach the collider if it exists
+                // Attach the collider if necessary
                 if let Some(c) = collider {
                     world.commands().entity(tile_entity).insert(c);
                 }
 
+                // Register the tile entity's ID in the resource
                 game_map.insert((x, y), tile_entity);
             }
         }
@@ -106,7 +121,14 @@ const SHIFT_CHANCE: f64 = 0.125;
 const SHIFT_LIMITER: i16 = 4;
 /// Generate a Vec containing the random offsets to ground height level
 fn generate_terrain_offsets() -> Result<VecDeque<i16>, BevyError> {
+    // TODO: I think I wrote this when MAP_WIDTH was i16. This is the only place I can see that
+    // returns an error, and it's a conversion from usize to usize. I should remove this and have
+    // the function return a VecDeque directly.
     let mut ground_offsets: VecDeque<i16> = VecDeque::with_capacity(MAP_WIDTH.try_into()?);
+    // TODO: This generation is alright, but it's rather "spiky". It would be better to randomly
+    // control the length of the segments rather than the chance of the level shifting each block,
+    // since I could completely prevent single blocks sticking out or single holes. I could even
+    // probabalistically distribute the run lengths in a completely customizable way.
     let mut running_offset: i16 = rand::random_range(-SHIFT_LIMITER..=SHIFT_LIMITER);
     ground_offsets.push_back(running_offset);
 
@@ -139,6 +161,7 @@ fn generate_terrain_offsets() -> Result<VecDeque<i16>, BevyError> {
     Ok(ground_offsets)
 }
 
+/// Data representation for hills used internally in terrain generation
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct HillParameters {
     x: i16,
@@ -184,9 +207,9 @@ impl HillParameters {
 }
 
 const HILL_MAX_OVERLAP: i16 = 10;
-const WIDTH_PER_HILL: usize = 50;
-const MAX_ATTEMPTS: usize = 50;
-/// Randomly generate hills
+const WIDTH_PER_HILL: usize = 50; // Tiles of map width per hill generated
+const MAX_ATTEMPTS: usize = 50; // Kind of stinky way to prevent an infinite loop
+/// Randomly generate all the hills necessary for the map
 fn generate_hills(params: &MapParameters) -> Vec<HillParameters> {
     let hill_count = MAP_WIDTH / WIDTH_PER_HILL;
     let mut hills: Vec<HillParameters> = Vec::new();
@@ -216,7 +239,7 @@ fn generate_hills(params: &MapParameters) -> Vec<HillParameters> {
 const SKY_HEIGHT: i16 = 15;
 /// How thick the layer of grass and dirt above the stone is
 const DIRT_THICKNESS: i16 = 5;
-/// Construct basic terrain map data by taking into account random terrain offset
+/// Bake all additive map generation data into TileData
 fn rasterize_canvas(
     params: &MapParameters,
     mut offsets: VecDeque<i16>,
@@ -238,18 +261,18 @@ fn rasterize_canvas(
     let mut map_data: HashMap<(i16, i16), TileData> =
         HashMap::with_capacity((MAP_WIDTH * MAP_HEIGHT).try_into()?);
 
-    // Iterate over the map lengthwise
+    // Iterate over the map from left to right
     for x in params.left_edge..=params.right_edge {
         // Determine the y-location of the grass block at the surface
-        // Get the random terrain offset
+        // Initialize a mut i16 using the random terrain offset
         let mut level = offsets.pop_front().unwrap_or_default();
 
-        // Get the terrain offset due to hills at this location
+        // Get the terrain offsets due to all hills at this location and add them to level
         for hill in hills {
             level += hill.height_at(x);
         }
 
-        // Insert the dirt block at (x, level)
+        // Insert the grass block at (x, level)
         map_data.insert(
             (x, level),
             TileData {
@@ -284,5 +307,6 @@ fn rasterize_canvas(
         }
     }
 
+    // Return the raw map tile data
     Ok(map_data)
 }
