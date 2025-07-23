@@ -124,7 +124,7 @@ fn generate_terrain_offsets() -> Result<VecDeque<i16>, BevyError> {
     // TODO: I think I wrote this when MAP_WIDTH was i16. This is the only place I can see that
     // returns an error, and it's a conversion from usize to usize. I should remove this and have
     // the function return a VecDeque directly.
-    let mut ground_offsets: VecDeque<i16> = VecDeque::with_capacity(MAP_WIDTH.try_into()?);
+    let mut ground_offsets: VecDeque<i16> = VecDeque::with_capacity(MAP_WIDTH);
     // TODO: This generation is alright, but it's rather "spiky". It would be better to randomly
     // control the length of the segments rather than the chance of the level shifting each block,
     // since I could completely prevent single blocks sticking out or single holes. I could even
@@ -259,7 +259,7 @@ fn rasterize_canvas(
 
     // Initialize the HashMap for block data. TileData will Default to an air block
     let mut map_data: HashMap<(i16, i16), TileData> =
-        HashMap::with_capacity((MAP_WIDTH * MAP_HEIGHT).try_into()?);
+        HashMap::with_capacity(MAP_WIDTH * MAP_HEIGHT);
 
     // Iterate over the map from left to right
     for x in params.left_edge..=params.right_edge {
