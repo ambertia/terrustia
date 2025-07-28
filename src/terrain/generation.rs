@@ -10,7 +10,7 @@ use bevy::{platform::collections::HashMap, prelude::*};
 
 use super::{GameMap, TileData};
 
-const MAP_WIDTH: usize = 200;
+const MAP_WIDTH: usize = 300;
 const MAP_HEIGHT: usize = 50;
 
 /// A struct containing map generation metadata
@@ -115,48 +115,43 @@ impl fmt::Display for TerrainGenerationError {
 
 impl Error for TerrainGenerationError {}
 
-/// Probability of the terrain shifting height each tile
-const SHIFT_CHANCE: f64 = 0.125;
 /// Maximum displacement from ground level; i.e. 4 -> Ground varies from -4 to 4
 const SHIFT_LIMITER: i16 = 4;
+const RUN_MIN: usize = 5;
+const RUN_MAX: usize = 10; // This is a u8 because it needs conversion into both usize and i16
 /// Generate a Vec containing the random offsets to ground height level
 fn generate_terrain_offsets() -> Result<VecDeque<i16>, BevyError> {
     // TODO: I think I wrote this when MAP_WIDTH was i16. This is the only place I can see that
     // returns an error, and it's a conversion from usize to usize. I should remove this and have
     // the function return a VecDeque directly.
-    let mut ground_offsets: VecDeque<i16> = VecDeque::with_capacity(MAP_WIDTH);
-    // TODO: This generation is alright, but it's rather "spiky". It would be better to randomly
-    // control the length of the segments rather than the chance of the level shifting each block,
-    // since I could completely prevent single blocks sticking out or single holes. I could even
-    // probabalistically distribute the run lengths in a completely customizable way.
-    let mut running_offset: i16 = rand::random_range(-SHIFT_LIMITER..=SHIFT_LIMITER);
-    ground_offsets.push_back(running_offset);
+    let mut ground_offsets: VecDeque<i16> = VecDeque::with_capacity(MAP_WIDTH + RUN_MAX);
+    let mut current_offset: i16 = rand::random_range(-SHIFT_LIMITER..=SHIFT_LIMITER);
 
     // Iterate across the map
-    for _ in 1..MAP_WIDTH {
-        // Only once every SHIFT_INTERVAL blocks on average should the terrain height shift
-        if !rand::random_bool(SHIFT_CHANCE) {
-            ground_offsets.push_back(running_offset);
-            continue;
+    while ground_offsets.len() < MAP_WIDTH {
+        // Pick a random length of blocks for the run at this height based on the constants
+        let run_length = rand::random_range(RUN_MIN..=RUN_MAX);
+        for _ in 0..run_length {
+            // Strictly speaking, it doesn't matter if ground_offsets is a bit longer than
+            // MAP_WIDTH - the extra offsets data just won't be used. This is why extra capacity is
+            // allocated when the queue is initialized.
+            ground_offsets.push_back(current_offset);
         }
 
         // Shift with a weight that pushes back towards the center
         // The difference between max height and current height as a ratio
-        let up_chance = f64::from(SHIFT_LIMITER - running_offset) / f64::from(2 * SHIFT_LIMITER);
+        let up_chance = f64::from(SHIFT_LIMITER - current_offset) / f64::from(2 * SHIFT_LIMITER);
 
         // Decide whether or not to shift up or down based on where in the height range we are
         if rand::random_bool(up_chance) {
-            running_offset += 1;
+            current_offset += 1;
         } else {
-            running_offset -= 1;
+            current_offset -= 1;
         }
 
         // Clamp to within the allowable range (though due to the weighting this shouldn't
         // generally be necessary)
-        running_offset = running_offset.clamp(-SHIFT_LIMITER, SHIFT_LIMITER);
-
-        // Push this value to the VecDeque
-        ground_offsets.push_back(running_offset);
+        current_offset = current_offset.clamp(-SHIFT_LIMITER, SHIFT_LIMITER);
     }
     Ok(ground_offsets)
 }
