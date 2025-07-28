@@ -44,10 +44,7 @@ impl FromWorld for GameMap {
 
         // Ground offsets are just a random variation intended to add subtle noise. If the method
         // fails, just default to all zeroes.
-        let ground_offsets = match generate_terrain_offsets() {
-            Ok(o) => o,
-            Err(_) => VecDeque::from([0; MAP_WIDTH]),
-        };
+        let ground_offsets = generate_terrain_offsets();
 
         // Hills are geometric structures with width and height parameters
         let hills = generate_hills(&map_params);
@@ -120,10 +117,7 @@ const SHIFT_LIMITER: i16 = 4;
 const RUN_MIN: usize = 5;
 const RUN_MAX: usize = 10; // This is a u8 because it needs conversion into both usize and i16
 /// Generate a Vec containing the random offsets to ground height level
-fn generate_terrain_offsets() -> Result<VecDeque<i16>, BevyError> {
-    // TODO: I think I wrote this when MAP_WIDTH was i16. This is the only place I can see that
-    // returns an error, and it's a conversion from usize to usize. I should remove this and have
-    // the function return a VecDeque directly.
+fn generate_terrain_offsets() -> VecDeque<i16> {
     let mut ground_offsets: VecDeque<i16> = VecDeque::with_capacity(MAP_WIDTH + RUN_MAX);
     let mut current_offset: i16 = rand::random_range(-SHIFT_LIMITER..=SHIFT_LIMITER);
 
@@ -153,7 +147,7 @@ fn generate_terrain_offsets() -> Result<VecDeque<i16>, BevyError> {
         // generally be necessary)
         current_offset = current_offset.clamp(-SHIFT_LIMITER, SHIFT_LIMITER);
     }
-    Ok(ground_offsets)
+    ground_offsets
 }
 
 /// Data representation for hills used internally in terrain generation
