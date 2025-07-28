@@ -39,19 +39,18 @@ impl FromWorld for GameMap {
         // Build a default of the map metadata struct
         let map_params = MapParameters::default();
 
+        // Bake tile data after generating all additive features
         // There are two structures that affect the level of the ground and are necessary during
         // the "additive" phase of map generation - these are the "terrain offsets" and hills
 
-        // Ground offsets are just a random variation intended to add subtle noise. If the method
-        // fails, just default to all zeroes.
-        let ground_offsets = generate_terrain_offsets();
-
+        // Ground offsets are just a random variation intended to add subtle noise
         // Hills are geometric structures with width and height parameters
-        let hills = generate_hills(&map_params);
-
-        // Bake everything we have so far into real block data
-        let tile_data = rasterize_canvas(&map_params, ground_offsets, &hills)
-            .expect("Failed to rasterize map canvas");
+        let tile_data = rasterize_canvas(
+            &map_params,
+            generate_terrain_offsets(),
+            generate_hills(&map_params),
+        )
+        .expect("Failed to rasterize map canvas");
 
         // TODO: This is where the subtractive phase of terrain generation should occur, modifying
         // the raw block data in tile_data
@@ -232,7 +231,7 @@ const DIRT_THICKNESS: i16 = 5;
 fn rasterize_canvas(
     params: &MapParameters,
     mut offsets: VecDeque<i16>,
-    hills: &Vec<HillParameters>,
+    hills: Vec<HillParameters>,
 ) -> Result<HashMap<(i16, i16), TileData>, BevyError> {
     // Safety checks
     // There have to be enough offsets for the size of the map; this shouldn't ever happen but it
@@ -257,7 +256,7 @@ fn rasterize_canvas(
         let mut level = offsets.pop_front().unwrap_or_default();
 
         // Get the terrain offsets due to all hills at this location and add them to level
-        for hill in hills {
+        for hill in &hills {
             level += hill.height_at(x);
         }
 
