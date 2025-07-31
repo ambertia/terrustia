@@ -10,11 +10,22 @@ use bevy::{platform::collections::HashMap, prelude::*};
 
 use super::{GameMap, TileData};
 
-const MAP_WIDTH: usize = 300;
-const MAP_HEIGHT: usize = 50;
-
 /// A struct containing map generation metadata
 struct MapParameters {
+    map_width: usize,
+    map_height: usize,
+    sky_height: i16,
+    offsets_shift_limit: i16,
+    offsets_run_min: usize,
+    offsets_run_max: usize,
+    hill_min_width: i16,
+    hill_max_width: i16,
+    hill_min_height: i16,
+    hill_max_height: i16,
+    hill_map_edge_margin: i16,
+    hill_max_overlap: i16,
+    hill_map_width_per: usize,
+    dirt_thickness: i16,
     right_edge: i16,
     left_edge: i16,
     top_edge: i16,
@@ -24,12 +35,36 @@ struct MapParameters {
 // This takes some file constants and bakes them into map metadata
 impl Default for MapParameters {
     fn default() -> Self {
-        MapParameters {
-            right_edge: i16::try_from(MAP_WIDTH / 2).unwrap(),
-            left_edge: -i16::try_from(MAP_WIDTH / 2).unwrap() - 1,
-            top_edge: SKY_HEIGHT,
-            bottom_edge: SKY_HEIGHT - i16::try_from(MAP_HEIGHT).unwrap() + 1,
-        }
+        // Build a struct with all the manually defined parameters
+        let mut params = MapParameters {
+            map_width: 300,
+            map_height: 50,
+            sky_height: 15,
+            offsets_shift_limit: 4,
+            offsets_run_min: 5,
+            offsets_run_max: 10,
+            hill_min_width: 20,
+            hill_max_width: 40,
+            hill_min_height: 5,
+            hill_max_height: 10,
+            hill_map_edge_margin: 10,
+            hill_max_overlap: 10,
+            hill_map_width_per: 50,
+            dirt_thickness: 5,
+            right_edge: default(),
+            left_edge: default(),
+            top_edge: default(),
+            bottom_edge: default(),
+        };
+        // Go over and actually compute the derived parameters (it's been convenient to have
+        // these numbers on hand as i16)
+        params.right_edge = i16::try_from(params.map_width / 2).unwrap();
+        params.left_edge = -i16::try_from(params.map_width / 2).unwrap() - 1;
+        params.top_edge = params.sky_height;
+        params.bottom_edge = params.sky_height - i16::try_from(params.map_height).unwrap() + 1;
+
+        // Return and transfer ownership of data
+        params
     }
 }
 
@@ -47,7 +82,7 @@ impl FromWorld for GameMap {
         // Hills are geometric structures with width and height parameters
         let tile_data = rasterize_canvas(
             &map_params,
-            generate_terrain_offsets(),
+            generate_terrain_offsets(&map_params),
             generate_hills(&map_params),
         )
         .expect("Failed to rasterize map canvas");
@@ -111,29 +146,32 @@ impl fmt::Display for TerrainGenerationError {
 
 impl Error for TerrainGenerationError {}
 
-/// Maximum displacement from ground level; i.e. 4 -> Ground varies from -4 to 4
-const SHIFT_LIMITER: i16 = 4;
-const RUN_MIN: usize = 5;
-const RUN_MAX: usize = 10; // This is a u8 because it needs conversion into both usize and i16
 /// Generate a Vec containing the random offsets to ground height level
-fn generate_terrain_offsets() -> VecDeque<i16> {
-    let mut ground_offsets: VecDeque<i16> = VecDeque::with_capacity(MAP_WIDTH + RUN_MAX);
-    let mut current_offset: i16 = rand::random_range(-SHIFT_LIMITER..=SHIFT_LIMITER);
+fn generate_terrain_offsets(params: &MapParameters) -> VecDeque<i16> {
+    // Make an empty VecDeque that should be big enough for everything from the get-go
+    let mut ground_offsets: VecDeque<i16> =
+        VecDeque::with_capacity(params.map_width + params.offsets_run_max);
+    // The actual value getting mutated when the terrain shifts
+    let mut current_offset: i16 =
+        rand::random_range(-params.offsets_shift_limit..=params.offsets_shift_limit);
 
     // Iterate across the map
-    while ground_offsets.len() < MAP_WIDTH {
-        // Pick a random length of blocks for the run at this height based on the constants
-        let run_length = rand::random_range(RUN_MIN..=RUN_MAX);
+    while ground_offsets.len() < params.map_width {
+        // Pick a random length of blocks for this run
+        let run_length = rand::random_range(params.offsets_run_min..=params.offsets_run_max);
         for _ in 0..run_length {
             // Strictly speaking, it doesn't matter if ground_offsets is a bit longer than
             // MAP_WIDTH - the extra offsets data just won't be used. This is why extra capacity is
-            // allocated when the queue is initialized.
+            // allocated when the queue is initialized; this way there's no need for code to
+            // awkwardly check if the run is going to push ground_offsets.len() over map_width when
+            // picking a run_length or in this loop when pushing to ground_offsets.
             ground_offsets.push_back(current_offset);
         }
 
         // Shift with a weight that pushes back towards the center
         // The difference between max height and current height as a ratio
-        let up_chance = f64::from(SHIFT_LIMITER - current_offset) / f64::from(2 * SHIFT_LIMITER);
+        let up_chance = f64::from(params.offsets_shift_limit - current_offset)
+            / f64::from(2 * params.offsets_shift_limit);
 
         // Decide whether or not to shift up or down based on where in the height range we are
         if rand::random_bool(up_chance) {
@@ -144,7 +182,8 @@ fn generate_terrain_offsets() -> VecDeque<i16> {
 
         // Clamp to within the allowable range (though due to the weighting this shouldn't
         // generally be necessary)
-        current_offset = current_offset.clamp(-SHIFT_LIMITER, SHIFT_LIMITER);
+        current_offset =
+            current_offset.clamp(-params.offsets_shift_limit, params.offsets_shift_limit);
     }
     ground_offsets
 }
@@ -157,21 +196,16 @@ struct HillParameters {
     width: i16,
 }
 
-const HILL_MAX_WIDTH: i16 = 40;
-const HILL_MIN_WIDTH: i16 = 20;
-const HILL_MAX_HEIGHT: i16 = 10;
-const HILL_MIN_HEIGHT: i16 = 5;
-const HILL_MAP_EDGE_MARGIN: i16 = 10;
 impl HillParameters {
     /// Randomly generate a new hill with const-defined constraints
     fn new(params: &MapParameters) -> Self {
         HillParameters {
             x: rand::random_range(
-                (params.left_edge + HILL_MAP_EDGE_MARGIN)
-                    ..=(params.right_edge - HILL_MAP_EDGE_MARGIN),
+                (params.left_edge + params.hill_map_edge_margin)
+                    ..=(params.right_edge - params.hill_map_edge_margin),
             ),
-            height: rand::random_range(HILL_MIN_HEIGHT..=HILL_MAX_HEIGHT),
-            width: rand::random_range(HILL_MIN_WIDTH..=HILL_MAX_WIDTH),
+            height: rand::random_range(params.hill_min_height..=params.hill_max_height),
+            width: rand::random_range(params.hill_min_width..=params.hill_max_width),
         }
     }
 
@@ -194,12 +228,10 @@ impl HillParameters {
     }
 }
 
-const HILL_MAX_OVERLAP: i16 = 10;
-const WIDTH_PER_HILL: usize = 50; // Tiles of map width per hill generated
 const MAX_ATTEMPTS: usize = 50; // Kind of stinky way to prevent an infinite loop
 /// Randomly generate all the hills necessary for the map
 fn generate_hills(params: &MapParameters) -> Vec<HillParameters> {
-    let hill_count = MAP_WIDTH / WIDTH_PER_HILL;
+    let hill_count = params.map_width / params.hill_map_width_per;
     let mut hills: Vec<HillParameters> = Vec::new();
     let mut attempts: usize = 0;
     // This loop can O(n^2) relative to hill_count since it checks each new hill against each
@@ -211,7 +243,7 @@ fn generate_hills(params: &MapParameters) -> Vec<HillParameters> {
         // Check it against all the existing hills
         for hill in hills.clone() {
             // If the new hill has unacceptable overlap with any hill, try a new one
-            if new_hill.get_overlap(&hill) > HILL_MAX_OVERLAP {
+            if new_hill.get_overlap(&hill) > params.hill_max_overlap {
                 continue 'generation;
             }
         }
@@ -223,10 +255,6 @@ fn generate_hills(params: &MapParameters) -> Vec<HillParameters> {
     hills
 }
 
-/// How far above "ground level" the sky goes
-const SKY_HEIGHT: i16 = 15;
-/// How thick the layer of grass and dirt above the stone is
-const DIRT_THICKNESS: i16 = 5;
 /// Bake all additive map generation data into TileData
 fn rasterize_canvas(
     params: &MapParameters,
@@ -236,18 +264,18 @@ fn rasterize_canvas(
     // Safety checks
     // There have to be enough offsets for the size of the map; this shouldn't ever happen but it
     // would be a problem if it did.
-    if offsets.len() < MAP_WIDTH {
+    if offsets.len() < params.map_width {
         return Err(TerrainGenerationError(format!(
             "Offsets length {} is insufficent for map width {}",
             offsets.len(),
-            MAP_WIDTH
+            params.map_width
         ))
         .into());
     }
 
     // Initialize the HashMap for block data. TileData will Default to an air block
     let mut map_data: HashMap<(i16, i16), TileData> =
-        HashMap::with_capacity(MAP_WIDTH * MAP_HEIGHT);
+        HashMap::with_capacity(params.map_width * params.map_height);
 
     // Iterate over the map from left to right
     for x in params.left_edge..=params.right_edge {
@@ -271,7 +299,7 @@ fn rasterize_canvas(
         );
 
         // Insert dirt tiles underneath the grass block until DIRT_THICKNESS tiles have been placed
-        for y in (level - DIRT_THICKNESS)..level {
+        for y in (level - params.dirt_thickness)..level {
             map_data.insert(
                 (x, y),
                 TileData {
@@ -283,7 +311,7 @@ fn rasterize_canvas(
         }
 
         // Insert stone tiles from the bottom of the map to the dirt layer
-        for y in params.bottom_edge..(level - DIRT_THICKNESS) {
+        for y in params.bottom_edge..(level - params.dirt_thickness) {
             map_data.insert(
                 (x, y),
                 TileData {
